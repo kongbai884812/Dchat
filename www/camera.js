@@ -274,9 +274,12 @@
     "flex-direction:column;font:14px/1.4 system-ui,-apple-system,sans-serif}",
     "#__cam_prev.on{display:flex}",
     "#__cam_prev .__pv_top{display:flex;align-items:center;justify-content:space-between;",
-    "padding:calc(10px + env(safe-area-inset-top,0px)) 16px 8px;color:#fff}",
+    "padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;color:#fff}",
+    "#__cam_prev .__pv_top button{background:none;border:0;color:#fff;padding:8px;line-height:0}",
+    "#__cam_prev .__pv_title{font-size:15px;opacity:.92}",
+    "#__cam_prev .__pv_spacer{width:40px;height:40px}",
     "",
-    "#__cam_prev svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}",
+    "#__cam_prev svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}",
     "#__cam_prev .__pv_img{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px 12px}",
     "#__cam_prev .__pv_img img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain}",
     "#__cam_chips{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;white-space:nowrap}",
@@ -286,6 +289,7 @@
     "#__cam_prev .__pv_bottom button{flex:1;padding:13px;border-radius:24px;border:0;font-size:15px}",
     "#__cam_prev .__pv_bottom .__pv_done{background:#4d6bfe;color:#fff}",
     "#__cam_prev .__pv_bottom .__pv_retry{background:rgba(255,255,255,.14);color:#fff}",
+    "#__cam_prev .__pv_bottom .__pv_crop{background:rgba(255,255,255,.14);color:#fff}",
     /* demo 自带的删除按钮只在 :hover 显示，手机上永远看不见；
        这里强制常显，并做成右上角红色圆形 × */
     ".attachment-ed6f47 .remove-ed6f47{opacity:1!important;width:20px!important;height:20px!important;",
@@ -565,20 +569,27 @@
       box.innerHTML =
         '<div class="__pv_top">' +
         '  <button type="button" data-act="retry"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-        '  <span>确认图片</span>' +
-        '  <span style="width:22px"></span>' +
+        '  <div class="__pv_title">确认图片</div>' +
+        '  <span class="__pv_spacer"></span>' +
         "</div>" +
         '<div class="__pv_img"><img alt="拍摄结果" /></div>' +
         '<div id="__cam_chips"></div>' +
         '<div class="__pv_bottom">' +
         '  <button type="button" class="__pv_retry" data-act="retry">重拍</button>' +
+        '  <button type="button" class="__pv_crop" data-act="crop">裁剪</button>' +
         '  <button type="button" class="__pv_done" data-act="done">完成</button>' +
         "</div>";
       document.body.appendChild(box);
     }
 
     var img = box.querySelector("img");
-    img.src = dataUrl || URL.createObjectURL(file);
+    var current = { file: file, url: null };
+    if (dataUrl) {
+      img.src = dataUrl;
+    } else {
+      current.url = URL.createObjectURL(file);
+      img.src = current.url;
+    }
 
     var chipBox = box.querySelector("#__cam_chips");
     chipBox.innerHTML = "";
@@ -587,7 +598,7 @@
       b.type = "button";
       b.textContent = t + " →";
       b.addEventListener("click", function () {
-        deliver([file]).then(function () {
+        deliver([current.file]).then(function () {
           if (!fillComposer(t)) toast("图片已加入，请输入问题");
         });
         hidePreview();
@@ -601,8 +612,9 @@
       if (!btn) return;
       var act = btn.getAttribute("data-act");
       if (act === "retry") { hidePreview(); openCamera(); }
+      else if (act === "crop") { openCrop(current, img); }
       else if (act === "done") {
-        deliver([file]).then(function (ok) {
+        deliver([current.file]).then(function (ok) {
           toast(ok ? "图片已加入" : "没找到上传入口");
         });
         hidePreview();
@@ -610,6 +622,176 @@
     };
 
     box.classList.add("on");
+  }
+
+
+  /* ================= 拍完再框选一块（裁剪） ================= */
+  function injectCropCss() {
+    if (document.getElementById("__cam_crop_css")) return;
+    var st = document.createElement("style");
+    st.id = "__cam_crop_css";
+    st.textContent =
+      "#__cam_crop{position:fixed;inset:0;z-index:2147483647;background:#0b0b0c;color:#fff;" +
+      "display:flex;flex-direction:column;font:15px/1.4 system-ui,-apple-system,sans-serif}" +
+      "#__cam_crop .__cr_top{display:flex;align-items:center;justify-content:space-between;" +
+      "padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;color:#fff}" +
+      "#__cam_crop .__cr_top button{background:none;border:0;color:#fff;padding:8px;line-height:0}" +
+      "#__cam_crop .__cr_top button.__cr_text{font-size:15px;line-height:1.4;opacity:.92;padding:8px 4px}" +
+      "#__cam_crop svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;" +
+      "stroke-linecap:round;stroke-linejoin:round}" +
+      "#__cam_crop .__cr_title{font-size:15px;opacity:.92}" +
+      "#__cam_crop .__cr_stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;" +
+      "overflow:hidden;padding:8px 12px calc(18px + env(safe-area-inset-bottom,0px))}" +
+      "#__cam_crop .__cr_stage img{max-width:100%;max-height:100%;object-fit:contain;" +
+      "user-select:none;-webkit-user-select:none;pointer-events:none}" +
+      "#__cam_crop .__cr_rect{position:absolute;border:1px solid rgba(255,255,255,.9);" +
+      "box-shadow:0 0 0 9999px rgba(0,0,0,.55);touch-action:none;box-sizing:border-box}" +
+      "#__cam_crop .__cr_h{position:absolute;width:26px;height:26px;border-radius:50%;" +
+      "background:#fff;border:2px solid #4d6bfe;box-sizing:border-box}" +
+      "#__cam_crop .__cr_nw{left:-13px;top:-13px}" +
+      "#__cam_crop .__cr_ne{right:-13px;top:-13px}" +
+      "#__cam_crop .__cr_sw{left:-13px;bottom:-13px}" +
+      "#__cam_crop .__cr_se{right:-13px;bottom:-13px}";
+    document.head.appendChild(st);
+  }
+
+  function openCrop(current, previewImg) {
+    var old = document.getElementById("__cam_crop");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var box = document.createElement("div");
+    box.id = "__cam_crop";
+    box.innerHTML =
+      '<div class="__cr_top">' +
+      '  <button type="button" data-act="cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+      '  <div class="__cr_title">裁剪</div>' +
+      '  <button type="button" class="__cr_text" data-act="ok">完成</button>' +
+      "</div>" +
+      '<div class="__cr_stage">' +
+      '  <img alt="待裁剪图片" />' +
+      '  <div class="__cr_rect">' +
+      '    <i class="__cr_h __cr_nw" data-h="nw"></i><i class="__cr_h __cr_ne" data-h="ne"></i>' +
+      '    <i class="__cr_h __cr_sw" data-h="sw"></i><i class="__cr_h __cr_se" data-h="se"></i>' +
+      "  </div>" +
+      "</div>";
+    document.body.appendChild(box);
+    injectCropCss();
+
+    var stage = box.querySelector(".__cr_stage");
+    var img = box.querySelector("img");
+    var rect = box.querySelector(".__cr_rect");
+    var srcUrl = URL.createObjectURL(current.file);
+    var drag = null;
+
+    function setRect(x, y, w, h) {
+      rect.style.left = x + "px";
+      rect.style.top = y + "px";
+      rect.style.width = w + "px";
+      rect.style.height = h + "px";
+    }
+
+    /** 图片在 stage 里的显示区域（px） */
+    function bounds() {
+      var b = img.getBoundingClientRect();
+      var s = stage.getBoundingClientRect();
+      return { x: b.left - s.left, y: b.top - s.top, w: b.width, h: b.height };
+    }
+
+    img.onload = function () {
+      var b = bounds();
+      setRect(b.x + b.w * 0.1, b.y + b.h * 0.1, b.w * 0.8, b.h * 0.8);
+    };
+    img.src = srcUrl;
+
+    function begin(e, mode, dir) {
+      e.preventDefault();
+      var r = rect.getBoundingClientRect();
+      var s = stage.getBoundingClientRect();
+      drag = { mode: mode, dir: dir, px: e.clientX, py: e.clientY,
+               x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height };
+      try { rect.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+
+    rect.addEventListener("pointerdown", function (e) {
+      var dir = e.target && e.target.getAttribute ? e.target.getAttribute("data-h") : null;
+      begin(e, dir ? "resize" : "move", dir);
+    });
+
+    rect.addEventListener("pointermove", function (e) {
+      if (!drag) return;
+      var b = bounds(), MIN = 44;
+      var dx = e.clientX - drag.px, dy = e.clientY - drag.py;
+      var x = drag.x, y = drag.y, w = drag.w, h = drag.h;
+      if (drag.mode === "move") {
+        x = Math.min(Math.max(b.x, drag.x + dx), b.x + b.w - w);
+        y = Math.min(Math.max(b.y, drag.y + dy), b.y + b.h - h);
+      } else {
+        var d = drag.dir || "";
+        if (d.indexOf("w") >= 0) {
+          var nx = Math.min(Math.max(b.x, drag.x + dx), drag.x + w - MIN);
+          w = drag.w + (drag.x - nx);
+          x = nx;
+        }
+        if (d.indexOf("e") >= 0) w = Math.max(MIN, Math.min(drag.w + dx, b.x + b.w - drag.x));
+        if (d.indexOf("n") >= 0) {
+          var ny = Math.min(Math.max(b.y, drag.y + dy), drag.y + h - MIN);
+          h = drag.h + (drag.y - ny);
+          y = ny;
+        }
+        if (d.indexOf("s") >= 0) h = Math.max(MIN, Math.min(drag.h + dy, b.y + b.h - drag.y));
+      }
+      setRect(x, y, w, h);
+    });
+
+    function endDrag() { drag = null; }
+    rect.addEventListener("pointerup", endDrag);
+    rect.addEventListener("pointercancel", endDrag);
+
+    function close() {
+      try { URL.revokeObjectURL(srcUrl); } catch (e) {}
+      if (box.parentNode) box.parentNode.removeChild(box);
+    }
+
+    box.onclick = function (e) {
+      var btn = e.target.closest("button");
+      if (!btn) return;
+      var act = btn.getAttribute("data-act");
+      if (act === "cancel") { close(); return; }
+      if (act !== "ok") return;
+
+      var b = bounds();
+      var s = stage.getBoundingClientRect();
+      var r = rect.getBoundingClientRect();
+      var x = Math.max(0, r.left - s.left - b.x);
+      var y = Math.max(0, r.top - s.top - b.y);
+      var w = Math.min(b.w - x, r.width);
+      var h = Math.min(b.h - y, r.height);
+      if (w < 8 || h < 8) { toast("选区太小"); return; }
+
+      var scale = img.naturalWidth / b.w;
+      var sw = Math.max(1, Math.round(w * scale));
+      var sh = Math.max(1, Math.round(h * scale));
+      var sx = Math.max(0, Math.round(x * scale));
+      var sy = Math.max(0, Math.round(y * scale));
+
+      var cap = Math.min(1, MAX_EDGE / Math.max(sw, sh));
+      var c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(sw * cap));
+      c.height = Math.max(1, Math.round(sh * cap));
+      c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+
+      c.toBlob(function (blob) {
+        if (!blob) { toast("裁剪失败"); return; }
+        var f = new File([blob], "crop_" + Date.now() + ".jpg",
+          { type: "image/jpeg", lastModified: Date.now() });
+        current.file = f;
+        if (current.url) { try { URL.revokeObjectURL(current.url); } catch (err) {} }
+        current.url = URL.createObjectURL(f);
+        previewImg.src = current.url;
+        close();
+        toast("已裁剪");
+      }, "image/jpeg", 0.92);
+    };
   }
 
   function hidePreview() {

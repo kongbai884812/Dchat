@@ -111,6 +111,7 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new AssetClient());
         web.setWebChromeClient(new Chrome());
         web.addJavascriptInterface(new Bridge(), "NativeShell");
+        web.addJavascriptInterface(new SecureBridge(), "DchatSecure");
 
         web.setDownloadListener(new android.webkit.DownloadListener() {
             @Override
@@ -420,6 +421,83 @@ public class MainActivity extends Activity {
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    /**
+     * API Key 加密存储：Android Keystore 里的 AES-256 密钥（不可导出）+ AES/GCM 密文。
+     * 网页拿到的仍是明文，但落盘、云备份、adb pull 出来的都只是密文。
+     */
+    public class SecureBridge {
+        private static final String PREF = "dchat-secure";
+        private static final String ALIAS = "dchat-api-key";
+        private static final String FIELD = "api-key";
+
+        private javax.crypto.SecretKey secretKey() throws Exception {
+            java.security.KeyStore ks = java.security.KeyStore.getInstance("AndroidKeyStore");
+            ks.load(null);
+            if (ks.containsAlias(ALIAS)) {
+                return ((java.security.KeyStore.SecretKeyEntry) ks.getEntry(ALIAS, null)).getSecretKey();
+            }
+            javax.crypto.KeyGenerator kg =
+                    javax.crypto.KeyGenerator.getInstance("AES", "AndroidKeyStore");
+            kg.init(new android.security.keystore.KeyGenParameterSpec.Builder(
+                    ALIAS,
+                    android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
+                            | android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(256)
+                    .build());
+            return kg.generateKey();
+        }
+
+        @android.webkit.JavascriptInterface
+        public String getKey() {
+            String stored = getSharedPreferences(PREF, MODE_PRIVATE).getString(FIELD, null);
+            if (stored == null) {
+                return null;
+            }
+            try {
+                byte[] raw = android.util.Base64.decode(stored, android.util.Base64.NO_WRAP);
+                byte[] iv = java.util.Arrays.copyOfRange(raw, 0, 12);
+                byte[] body = java.util.Arrays.copyOfRange(raw, 12, raw.length);
+                javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+                cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey(),
+                        new javax.crypto.spec.GCMParameterSpec(128, iv));
+                return new String(cipher.doFinal(body), java.nio.charset.StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                // 密钥失效（系统重置、备份恢复）时清掉密文，让用户重新填
+                clearKey();
+                return null;
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        public void setKey(String value) {
+            if (value == null) {
+                clearKey();
+                return;
+            }
+            try {
+                javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+                cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey());
+                byte[] body = cipher.doFinal(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                byte[] iv = cipher.getIV();
+                byte[] raw = new byte[iv.length + body.length];
+                System.arraycopy(iv, 0, raw, 0, iv.length);
+                System.arraycopy(body, 0, raw, iv.length, body.length);
+                getSharedPreferences(PREF, MODE_PRIVATE).edit()
+                        .putString(FIELD, android.util.Base64.encodeToString(raw, android.util.Base64.NO_WRAP))
+                        .apply();
+            } catch (Exception e) {
+                // 加密失败就不落盘，网页下次会要求重填
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        public void clearKey() {
+            getSharedPreferences(PREF, MODE_PRIVATE).edit().remove(FIELD).apply();
+        }
     }
 
     /** 暴露给网页：精简导入 */
