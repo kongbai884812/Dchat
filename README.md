@@ -1,5 +1,8 @@
 # Dchat
 
+把 DeepSeek 开源的 [chat-demo](https://github.com/deepseek-ai/chat-demo) 打包成**可安装的 Android APK**（约 1.9MB）。
+自带相机、相册、文件三个入口，聊天记录可导入，构建全程可以在手机上完成。
+
 > **非官方项目**：与 DeepSeek 官方无任何关联，未获授权或背书。"DeepSeek" 是其权利人的商标，
 > 本项目不使用该名称或标识作为自身品牌。前端来自 DeepSeek 开源的 chat-demo（MIT）。
 
@@ -13,9 +16,7 @@
 
 唯一请求：**改了之后别用 `Dchat` 这个名字和图标发布**，避免和本仓库混淆。
 
-## 这是什么
-
-把 `chat-demo-v0.1.1` 这套 HTML 产物打包成**可安装的 Android APK**。
+## 概览
 
 | 项 | 值 |
 |---|---|
