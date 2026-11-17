@@ -246,7 +246,8 @@ public class MainActivity extends Activity {
     private class Chrome extends WebChromeClient {
         @Override
         public boolean onConsoleMessage(android.webkit.ConsoleMessage cm) {
-            if (DEBUG) android.util.Log.d("DCHAT", cm.message() + "  @" + cm.lineNumber());
+            // 页面 console 输出转发到 logcat，方便排查界面问题
+            android.util.Log.i("DchatWeb", cm.message() + " (" + cm.sourceId() + ":" + cm.lineNumber() + ")");
             return true;
         }
 
@@ -593,6 +594,31 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void downloadFailed(String msg) {
             downloadFailedToUser(msg);
+        }
+
+        /**
+         * 页面自检用：把一段文本写到「下载」目录，方便从外部读取（仅诊断使用）。
+         */
+        @JavascriptInterface
+        public void dumpText(String name, String text) {
+            try {
+                // 先删掉同名旧文件，避免 MediaStore 自动加 (1)(2) 后缀
+                try {
+                    getContentResolver().delete(MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            MediaStore.Downloads.DISPLAY_NAME + "=?", new String[]{name});
+                } catch (Exception ignored) {
+                }
+                ContentValues v = new ContentValues();
+                v.put(MediaStore.Downloads.DISPLAY_NAME, name);
+                v.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+                android.net.Uri uri = getContentResolver()
+                        .insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) return;
+                java.io.OutputStream out = getContentResolver().openOutputStream(uri);
+                out.write(text.getBytes("UTF-8"));
+                out.close();
+            } catch (Exception ignored) {
+            }
         }
 
         @JavascriptInterface
