@@ -1,0 +1,39 @@
+Dchat
+=====
+
+本项目是一个第三方 Android 客户端壳，用于运行 DeepSeek 开源的 chat-demo 前端。
+
+非官方声明
+----------
+本项目与 DeepSeek 官方无任何关联，未获其授权或背书。
+"DeepSeek" 是其权利人的商标，本项目不使用该名称、标识作为自身品牌。
+
+第三方组件
+----------
+1. DeepSeek chat-demo (https://github.com/deepseek-ai/chat-demo)
+   - 许可证：MIT
+   - 版权：Copyright (c) 2026 DeepSeek
+   - 本项目对其构建产物做了修改（替换应用名文案、注入相机/诊断脚本、
+     增加导入精简逻辑）。
+   - 许可证全文：third_party/chat-demo/LICENSE（同时随 APK 打包在 assets/public/LICENSE）。
+   - 该前端里包含的第三方库（React、Zustand、Mermaid、KaTeX、marked 等）
+     均为 MIT 许可，其版权声明已在各自的构建产物中隐含。
+
+2. Capacitor (https://github.com/ionic-team/capacitor)
+   - 许可证：MIT
+
+3. R8 / D8 (com.android.tools:r8)
+   - 许可证：BSD-3-Clause
+
+4. 图标
+   - 本项目图标为黑色大写字母 "D"，源文件 native-shell/icon-source.png，
+     由 DejaVu Sans Bold 字体的字形渲染而成。DejaVu 字体为自由许可
+     （Bitstream Vera + Arev，允许商用与再分发），字形本身不构成受保护的
+     美术作品，随本项目以 MIT 授权。
+   - 本项目**不使用**任何第三方的品牌标识、商标图形或 logo。
+
+数据与隐私
+----------
+- API Key 仅保存在设备本地（WebView localStorage），不上传任何第三方服务器。
+- 聊天记录保存在设备本地 (IndexedDB)。
+- 请求由客户端直接发往 api.deepseek.com，不经过本项目作者的任何服务。

@@ -1,0 +1,13 @@
+{
+  "appId": "app.dchat",
+  "appName": "Dchat",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": true
+  }
+}

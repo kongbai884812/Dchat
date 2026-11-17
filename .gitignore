@@ -1,0 +1,32 @@
+# 依赖
+node_modules/
+
+# Capacitor / Gradle 生成物
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+
+# 自建壳的构建产物与签名
+native-shell/build/
+native-shell/dist/
+dist/
+native-shell/release.jks
+
+# 任何密钥、签名、安装包
+*.jks
+*.keystore
+*.apk
+*.aab
+*.idsig
+.env
+.env.*
+!.env.example
+
+# Gradle 正式签名（模板 keystore.properties.example 才会提交）
+android/keystore.properties
+
+# 本地杂项
+.DS_Store
+*.local.*
