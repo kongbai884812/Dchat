@@ -1,25 +1,9 @@
-/* 诊断入口：右上角一个「?」按钮，点开全屏 iframe 加载 diag.html（不卸载 React）。
-   同时匹配中英文的侧边栏按钮，语言切换后也能挂上。 */
+/* 诊断浮层：入口是 React 侧的 DiagButton（顶栏右上角），这里只负责全屏 iframe。
+   挂到 window 上，diag.html 里的「返回」会调用 parent.__closeDiag() 收起浮层。 */
 (function () {
-  var ICON =
-    '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" ' +
-    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-    '<circle cx="12" cy="12" r="9.2"/>' +
-    '<path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.1-2.6 3.7"/>' +
-    '<circle cx="12" cy="17.1" r="0.95" fill="currentColor" stroke="none"/></svg>';
-
-  function findRow(el) {
-    var cur = el, depth = 0;
-    while (cur.parentElement && depth++ < 6) {
-      var w = cur.parentElement.getBoundingClientRect().width;
-      if (w >= window.innerWidth * 0.85) return cur.parentElement;
-      cur = cur.parentElement;
-    }
-    return el.parentElement;
-  }
-
-  /* ---- 诊断页：同页浮层，不卸载 React 应用 ---- */
-  var overlay = null, frame = null, loaded = false;
+  var overlay = null;
+  var frame = null;
+  var loaded = false;
 
   function buildOverlay() {
     overlay = document.createElement("div");
@@ -35,11 +19,15 @@
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
 
-    frame.addEventListener("load", function () { loaded = true; });
+    frame.addEventListener("load", function () {
+      loaded = true;
+    });
   }
 
   function openDiag() {
-    try { window.NativeShell && window.NativeShell.setModal(1); } catch (e) {}
+    try {
+      window.NativeShell && window.NativeShell.setModal(1);
+    } catch (e) {}
     if (!overlay) buildOverlay();
     if (!loaded) frame.src = "diag.html";
     overlay.style.display = "flex";
@@ -49,58 +37,16 @@
   }
 
   function closeDiag() {
-    try { window.NativeShell && window.NativeShell.setModal(0); } catch (e) {}
+    try {
+      window.NativeShell && window.NativeShell.setModal(0);
+    } catch (e) {}
     if (!overlay) return;
     overlay.style.transform = "translateY(100%)";
-    setTimeout(function () { overlay.style.display = "none"; }, 180);
+    setTimeout(function () {
+      overlay.style.display = "none";
+    }, 180);
   }
 
   window.__openDiag = openDiag;
   window.__closeDiag = closeDiag;
-
-  function mount() {
-    if (document.getElementById("__diag_btn")) return;
-    var menu = document.querySelector(
-      '[aria-label="打开边栏"],[aria-label="Open sidebar"]'
-    );
-    if (!menu || !menu.parentElement) return;
-
-    var row = findRow(menu);
-    if (!row) return;
-
-    var a = document.createElement("button");
-    a.id = "__diag_btn";
-    a.type = "button";
-    a.setAttribute("aria-label", "诊断");
-    a.innerHTML = ICON;
-    a.style.cssText =
-      "display:inline-flex;align-items:center;justify-content:center;" +
-      "width:44px;height:44px;flex:none;margin-left:auto;margin-right:4px;" +
-      "background:none;border:0;color:inherit;padding:0;opacity:.85;" +
-      "-webkit-tap-highlight-color:transparent";
-    a.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      openDiag();
-    });
-    row.appendChild(a);
-  }
-
-  // 不用无限轮询：React 首次挂载通常在 3s 内完成，
-  // 之后只在页面重新可见时补挂一次，省电也省 CPU。
-  function boot() {
-    mount();
-    var tries = 0;
-    (function retry() {
-      if (document.getElementById("__diag_btn")) return;
-      mount();
-      if (++tries < 12) setTimeout(retry, 400 + tries * 300);
-    })();
-    document.addEventListener("visibilitychange", function () {
-      if (!document.hidden && !document.getElementById("__diag_btn")) mount();
-    });
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
 })();

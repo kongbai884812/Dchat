@@ -256,13 +256,24 @@ public class MainActivity extends Activity {
                 @Override
                 public void run() {
                     boolean wantsCamera = false;
+                    boolean wantsAudio = false;
                     for (String r : request.getResources()) {
                         if ("android.webkit.resource.VIDEO_CAPTURE".equals(r)) wantsCamera = true;
+                        if ("android.webkit.resource.AUDIO_CAPTURE".equals(r)) wantsAudio = true;
                     }
+                    // 缺哪个系统权限就先申请，一次把缺的都申请掉
+                    java.util.ArrayList<String> missing = new java.util.ArrayList<>();
                     if (wantsCamera
                             && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        missing.add(Manifest.permission.CAMERA);
+                    }
+                    if (wantsAudio
+                            && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        missing.add(Manifest.permission.RECORD_AUDIO);
+                    }
+                    if (!missing.isEmpty()) {
                         pendingPermission = request;
-                        requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAMERA_PERM);
+                        requestPermissions(missing.toArray(new String[0]), REQ_CAMERA_PERM);
                         return;
                     }
                     request.grant(request.getResources());
@@ -413,8 +424,10 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQ_CAMERA_PERM) {
             if (pendingPermission != null) {
-                boolean ok = grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                boolean ok = grantResults.length > 0;
+                for (int result : grantResults) {
+                    if (result != PackageManager.PERMISSION_GRANTED) ok = false;
+                }
                 if (ok) pendingPermission.grant(pendingPermission.getResources());
                 else pendingPermission.deny();
                 pendingPermission = null;
