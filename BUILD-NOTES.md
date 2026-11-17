@@ -21,7 +21,8 @@ bash native-shell/build.sh          # → native-shell/dist/dchat-v1.apk
 
 ```bash
 cp native-shell/dist/dchat-v1.apk /tmp/Dchat-v<version>-rebuild.apk
-/root/dsh-bin/adb-shell "rm -f /sdcard/Download/DSHA/Dchat-*-rebuild.apk"
+# 设备策略禁止通配符，必须逐个写明确路径
+/root/dsh-bin/adb-shell "rm -f /sdcard/Download/DSHA/Dchat-v<旧版本>-rebuild.apk"
 curl -s -G 127.0.0.1:3090/app/export \
   --data-urlencode "path=/tmp/Dchat-v<version>-rebuild.apk" \
   -H @/root/.dsh/.bridge_headers
