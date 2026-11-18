@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>白屏诊断</title>
+    <style>
+      :root {
+        --bg: #0f1115;
+        --panel: #171a21;
+        --line: #242a35;
+        --fg: #e8ecf3;
+        --dim: #8b95a7;
+        --ok: #3ddc84;
+        --bad: #ff6b6b;
+        --warn: #ffb454;
+        --accent: #4d6bfe;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          14px/1.65 -apple-system,
+          'HarmonyOS Sans',
+          'Noto Sans SC',
+          system-ui,
+          sans-serif;
+        padding: 16px 14px calc(28px + env(safe-area-inset-bottom, 0px));
+      }
+      h1 {
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--dim);
+        font-size: 12.5px;
+        margin-bottom: 16px;
+      }
+      .verdict {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        border-radius: 10px;
+        padding: 12px 13px;
+        margin: 0 0 16px;
+        font-size: 13.5px;
+        white-space: pre-wrap;
+      }
+      .verdict.ok {
+        border-left-color: var(--ok);
+      }
+      .verdict.bad {
+        border-left-color: var(--bad);
+      }
+      .verdict.warn {
+        border-left-color: var(--warn);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.8px;
+      }
+      td {
+        padding: 7px 4px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+        word-break: break-all;
+      }
+      td:first-child {
+        color: var(--dim);
+        width: 38%;
+      }
+      .v {
+        font-weight: 600;
+      }
+      .v.ok {
+        color: var(--ok);
+      }
+      .v.bad {
+        color: var(--bad);
+      }
+      .v.warn {
+        color: var(--warn);
+      }
+      .note {
+        color: var(--dim);
+        font-size: 11.5px;
+        display: block;
+        margin-top: 2px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: -4px 0 12px;
+      }
+      #back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: none;
+        border: 1px solid var(--line);
+        color: var(--fg);
+        border-radius: 9px;
+        padding: 8px 12px;
+        font: 13px system-ui;
+        text-decoration: none;
+      }
+      #back:active {
+        opacity: 0.6;
+      }
+      .bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        gap: 8px;
+        padding: 10px 14px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+      }
+      .bar button {
+        flex: 1;
+        padding: 10px;
+        border-radius: 9px;
+        border: 1px solid var(--line);
+        background: none;
+        color: var(--fg);
+        font-size: 13px;
+      }
+      .bar button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      body {
+        padding-bottom: 80px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar"><button id="back" type="button">← 返回</button></div>
+    <h1>白屏诊断</h1>
+    <div class="sub">
+      在你要排查的那个环境里打开这个页面（App 内 / Chrome / 打包后）。它不依赖任何外部资源。
+    </div>
+    <div class="sub" style="margin-top: 10px">
+      聊天记录导入有问题？→ <a href="zipcheck.html" style="color: #4d6bfe">ZIP 自检</a>
+    </div>
+    <div class="verdict" id="verdict">检测中…</div>
+    <table id="rows"></table>
+
+    <div class="bar">
+      <button id="copy">复制报告</button>
+      <button class="primary" id="rerun">重新检测</button>
+    </div>
+
+    <script>
+      ;(function () {
+        'use strict'
+        var rows = document.getElementById('rows')
+        var results = []
+        var firstError = null
+
+        window.addEventListener('error', function (e) {
+          if (!firstError)
+            firstError =
+              (e.message || String(e.error)) + ' @' + (e.filename || '') + ':' + (e.lineno || '')
+        })
+        window.addEventListener('unhandledrejection', function (e) {
+          if (!firstError)
+            firstError = 'unhandledrejection: ' + (e.reason && (e.reason.message || e.reason))
+        })
+
+        function add(name, value, level, note) {
+          results.push({ name: name, value: value, level: level || 'ok', note: note || '' })
+          var tr = document.createElement('tr')
+          var td1 = document.createElement('td')
+          td1.textContent = name
+          var td2 = document.createElement('td')
+          var span = document.createElement('span')
+          span.className = 'v ' + (level || 'ok')
+          span.textContent = value
+          td2.appendChild(span)
+          if (note) {
+            var n = document.createElement('span')
+            n.className = 'note'
+            n.textContent = note
+            td2.appendChild(n)
+          }
+          tr.appendChild(td1)
+          tr.appendChild(td2)
+          rows.appendChild(tr)
+        }
+
+        function uaInfo() {
+          var ua = navigator.userAgent
+          var m = ua.match(/Chrome\/([\d.]+)/)
+          var wv = /; wv\)/.test(ua) || /Version\/[\d.]+.*Chrome/.test(ua)
+          return { ua: ua, chrome: m ? m[1] : '?', webview: wv }
+        }
+
+        async function fetchProbe(url, opts, timeoutMs) {
+          var ctl = new AbortController()
+          var t = setTimeout(function () {
+            ctl.abort()
+          }, timeoutMs || 8000)
+          var started = Date.now()
+          try {
+            var r = await fetch(
+              url,
+              Object.assign({ cache: 'no-store', signal: ctl.signal }, opts || {})
+            )
+            return { ok: true, status: r.status, ms: Date.now() - started }
+          } catch (e) {
+            return {
+              ok: false,
+              error: (e && e.name + ': ' + e.message) || String(e),
+              ms: Date.now() - started,
+            }
+          } finally {
+            clearTimeout(t)
+          }
+        }
+
+        function moduleSupported() {
+          return 'noModule' in HTMLScriptElement.prototype
+        }
+
+        async function dynamicImportWorks() {
+          try {
+            await import('data:text/javascript,export default 1')
+            return true
+          } catch (e) {
+            return false
+          }
+        }
+
+        async function run() {
+          rows.innerHTML = ''
+          results = []
+          firstError = null
+          var verdict = document.getElementById('verdict')
+          verdict.className = 'verdict'
+          verdict.textContent = '检测中…'
+
+          // 1. 运行环境
+          var proto = location.protocol
+          add('地址', location.href, 'ok')
+          add(
+            'origin',
+            String(location.origin),
+            proto === 'file:' ? 'bad' : 'ok',
+            proto === 'file:' ? 'file:// 下 origin 是 null，所有跨域规则都会失效' : ''
+          )
+          add('协议', proto, proto === 'file:' ? 'bad' : proto === 'https:' ? 'ok' : 'warn')
+          add(
+            '安全上下文',
+            window.isSecureContext ? '是' : '否',
+            window.isSecureContext ? '' : '非安全上下文会禁用部分 API（剪贴板、PWA、部分存储）'
+          )
+
+          var u = uaInfo()
+          add('Chrome/WebView 内核', u.chrome, 'ok', u.ua)
+          add('WebView 容器', u.webview ? '是（App 内 WebView）' : '否（独立浏览器）', 'ok')
+
+          // 2. 渲染是否真的生效
+          var probe = document.createElement('div')
+          probe.style.cssText = 'width:40px;height:20px;position:absolute;left:-9999px'
+          document.body.appendChild(probe)
+          var painted = probe.offsetHeight === 20
+          probe.remove()
+          add(
+            'CSS / 布局',
+            painted ? '正常' : '异常',
+            painted ? 'ok' : 'bad',
+            painted ? '' : '连样式都没生效，说明页面根本没被正确渲染'
+          )
+
+          // 3. 模块支持
+          var modOk = moduleSupported()
+          add('支持 <script type=module>', modOk ? '是' : '否', modOk ? 'ok' : 'bad')
+          var impOk = await dynamicImportWorks()
+          add(
+            '动态 import()',
+            impOk ? '可用' : '被拒',
+            impOk ? 'ok' : 'bad',
+            impOk ? '' : '模块加载被拦，用 ESM 写的页面会整页白屏'
+          )
+
+          // 4. 同目录静态文件（判断是不是 file:// 拦截）
+          var local = await fetchProbe('./config.js')
+          var localLevel = local.ok ? 'ok' : proto === 'file:' ? 'bad' : 'warn'
+          add(
+            '读取同目录文件 config.js',
+            local.ok ? 'HTTP ' + local.status : '失败',
+            localLevel,
+            local.ok ? '' : local.error + '  ← file:// 或路径不对时就是这样'
+          )
+
+          // 5. 跨域请求（判断 CORS / 明文 / 断网）
+          var api = await fetchProbe(
+            'https://api.deepseek.com/',
+            { method: 'GET', mode: 'cors' },
+            8000
+          )
+          if (api.ok) {
+            add('访问 api.deepseek.com', 'HTTP ' + api.status + ' (' + api.ms + 'ms)', 'ok')
+          } else if (/Failed to fetch|NetworkError|Load failed/i.test(api.error || '')) {
+            add(
+              '访问 api.deepseek.com',
+              '请求被拒',
+              'bad',
+              '可能是 CORS 未放行、被墙、或系统时间/证书异常：' + api.error
+            )
+          } else {
+            add('访问 api.deepseek.com', '失败', 'warn', api.error)
+          }
+
+          // 6. 存储
+          var ls = false
+          try {
+            localStorage.setItem('__t', '1')
+            localStorage.removeItem('__t')
+            ls = true
+          } catch (e) {}
+          add('localStorage', ls ? '可用' : '不可用', ls ? 'ok' : 'warn')
+
+          // 7. 未捕获错误
+          add('未捕获错误', firstError ? '有' : '无', firstError ? 'bad' : 'ok', firstError || '')
+
+          // 8. 结论
+          var lines = []
+          var cls = 'ok'
+          if (proto === 'file:') {
+            cls = 'bad'
+            lines.push('页面跑在 file:// 下 —— 这就是白屏的根因。')
+            if (!impOk) lines.push('· 动态 import() 已被拒绝，用 ES module 的前端框架会整页白屏。')
+            if (!local.ok) lines.push('· 读同目录文件失败，fetch/XHR 读本地资源一律被当跨域拒掉。')
+            lines.push(
+              '→ 换 https://localhost（Capacitor / WebViewAssetLoader）或起个本地 http 服务，页面不用改。'
+            )
+          } else if (!painted || !ls) {
+            cls = 'warn'
+            lines.push('协议没问题，但渲染/存储异常，先看上面标红的行。')
+          } else if (!api.ok) {
+            cls = 'warn'
+            lines.push('页面本身能跑，问题在网络层：接口连不上。')
+            lines.push(
+              '→ 聊天发不出去通常是 CORS（浏览器不能直连 api.deepseek.com）或密钥在前端被拒。'
+            )
+            lines.push('→ 正确做法：加一层自己的代理，前端只请求自己的域名。')
+          } else {
+            lines.push('环境正常：模块、fetch、网络都通。')
+            lines.push(
+              '如果仍然白屏，问题在页面自己的逻辑（首屏 await 一个失败请求、或资源 404）。'
+            )
+          }
+          if (firstError) lines.push('\n首个未捕获错误：' + firstError)
+
+          verdict.className = 'verdict ' + cls
+          verdict.textContent = lines.join('\n')
+        }
+
+        document.getElementById('rerun').addEventListener('click', run)
+
+        document.getElementById('copy').addEventListener('click', async function () {
+          var text =
+            '[白屏诊断 ' +
+            new Date().toISOString() +
+            ']\n' +
+            results
+              .map(function (r) {
+                return r.name + ': ' + r.value + (r.note ? '  (' + r.note + ')' : '')
+              })
+              .join('\n') +
+            '\n\n结论: ' +
+            document.getElementById('verdict').textContent
+          try {
+            await navigator.clipboard.writeText(text)
+            this.textContent = '已复制'
+          } catch (e) {
+            // 无剪贴板权限时降级为可选中文本
+            var ta = document.createElement('textarea')
+            ta.value = text
+            document.body.appendChild(ta)
+            ta.select()
+            try {
+              document.execCommand('copy')
+              this.textContent = '已复制'
+            } catch (e2) {
+              this.textContent = '复制失败'
+            }
+            ta.remove()
+          }
+          var btn = this
+          setTimeout(function () {
+            btn.textContent = '复制报告'
+          }, 1600)
+        })
+
+        document.getElementById('back').addEventListener('click', function () {
+          try {
+            if (window.parent && window.parent !== window && window.parent.__closeDiag) {
+              window.parent.__closeDiag()
+              return
+            }
+          } catch (e) {
+            /* 跨域兜底 */
+          }
+          if (history.length > 1) history.back()
+          else location.href = 'index.html'
+        })
+
+        // 先渲染骨架，再跑探测，避免一进来就卡住
+        requestAnimationFrame(function () {
+          setTimeout(run, 60)
+        })
+      })()
+    </script>
+  </body>
+</html>

@@ -117,6 +117,7 @@ chat-demo-app/
 ├── docs/
 │   ├── BUILD.md               构建与签名
 │   └── INTERNALS.md           实现细节与排障
+├── frontend/                  chat-demo 前端源码（含改动）
 ├── server/proxy.mjs           本地静态预览服务（零依赖，只服务 www/）
 ├── third_party/chat-demo/     DeepSeek chat-demo 的 MIT 许可证
 ├── dist/                      构建产物（.gitignore 已排除）
@@ -135,6 +136,18 @@ chat-demo-app/
 | 1.30 | 拍照后的整套界面（取景器、预览、裁剪、提示）跟随中英语言 |
 | 1.29 | 修复英文界面下发图卡住、开关点不动 |
 | 1.28 | 清理无人使用的代码，输入区收尾 |
+
+## 前端源码
+
+`frontend/` 是完整的 chat-demo 源码（含本项目改动），`www/` 是它的构建产物：
+
+```bash
+cd frontend && pnpm install && pnpm build
+rm -rf ../www && cp -r dist ../www
+cd ../native-shell && bash build.sh
+```
+
+基线提交、改动清单见 [frontend/README.md](frontend/README.md)。
 
 ## 文档
 
