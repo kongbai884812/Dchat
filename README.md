@@ -26,7 +26,7 @@
 | minSdk / targetSdk | 24 / 36 |
 | 资源加载 | `https://localhost` 映射到应用内资源，**不是 file://** |
 | 构建 | `native-shell/build.sh`：aapt + javac + d8 + zipalign + apksigner，无需 Gradle |
-| 当前版本 | 1.28（versionCode 29） |
+| 版本 | 见 `native-shell/AndroidManifest.xml`（`versionCode` / `versionName`） |
 | APK 体积 | 约 1.9MB |
 
 两个关键结论：
@@ -79,7 +79,7 @@ APK 由本地 keystore 自签名，未经应用商店或厂商实名认证。安
 | 项 | 状态 |
 |---|---|
 | Java 代码 | 788 行，纯 framework API，D8 编译而非 R8 minify，类名原样保留 |
-| `www/camera.js` | 1429 行未压缩源码，APK 内与仓库内文件 **sha256 一致** |
+| `www/camera.js` | 1452 行未压缩源码，APK 内与仓库内文件 **sha256 一致** |
 | 加密逻辑 | API Key 用 Android Keystore 里的 AES-256（不可导出密钥）+ AES/GCM 存 `SharedPreferences`，明文不写 `localStorage`；除此之外没有自造加密，跨 JS 桥传二进制用的是 Base64 |
 | 网络请求 | 仅 demo 自己发往 `api.deepseek.com`，不经过任何中转服务器 |
 | 数据上报 | 无。不收集设备信息、不埋点、不联第三方 SDK |

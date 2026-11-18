@@ -30,7 +30,12 @@ curl -s -G 127.0.0.1:3090/app/export \
   -H @/root/.dsh/.bridge_headers
 ```
 
-## 本轮功能（1.28）
+## 本轮功能（1.29）
+
+- 修复：英文界面下「发送」按钮找不到（`camera.js` 写死中文 `aria-label`），预览页发图会卡住；深度思考 / 智能搜索开关、侧边栏热区同样受影响
+- 做法：`camera.js` 顶部加 `LABELS` 双语表和 `byLabel()`，所有跨到聊天页的选择器统一走它
+
+## 上一轮功能（1.28）
 
 - 语音输入：`HoldToTalk` + `usePushToTalk`，按住收音、松手转写即发送、上滑取消；接口 `/v1/tools/asr`
 - 录音链路：三档约束退让 + 记住可用档位 + 进入语音模式预热麦克风（`warmStream` 直接复用）

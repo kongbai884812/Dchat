@@ -57,16 +57,19 @@ cd android && ./gradlew assembleRelease
 
 ## 改配置
 
-`capacitor.config.json`：
+打包出来的 App 只认两处配置：
 
-```json
-{
-  "appId": "app.dchat",
-  "appName": "Dchat",
-  "webDir": "www",
-  "server": { "androidScheme": "https", "cleartext": false },
-  "android": { "allowMixedContent": false, "webContentsDebuggingEnabled": true }
-}
-```
+| 想改 | 改哪里 |
+|---|---|
+| 应用名 / 版本 | `native-shell/AndroidManifest.xml`（`android:label`、`versionCode`、`versionName`） |
+| 权限 | 同上的 `uses-permission`；相机、录音都靠 WebView 的授权回调转成系统权限框 |
+| 图标 | `native-shell/res/mipmap-*`，源图 `native-shell/icon-source.png` |
+| 启动页 / 主题 | 没有，壳是纯代码建 View，不加载布局 |
 
-`webContentsDebuggingEnabled` 已开：数据线连电脑，Chrome 打开 `chrome://inspect` 能直接看 App 内 WebView 的 console。
+`capacitor.config.json` **不影响打出来的 APK**，它只在用 `npx cap add android` 现场生成
+Capacitor 工程时决定 appId / appName / webDir。里面的 `webContentsDebuggingEnabled`
+也只对那个生成出来的工程有效——自建壳没有打开 WebView 调试。
+
+想在自建壳里临时开调试（`chrome://inspect` 看 console）：在
+`native-shell/src/app/dchat/MainActivity.java` 的 `onCreate` 里、`new WebView(this)` 之后加一行
+`WebView.setWebContentsDebuggingEnabled(true);`，重新出包，调试完记得删掉。

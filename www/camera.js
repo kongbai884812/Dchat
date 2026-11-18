@@ -25,6 +25,26 @@
   // 这里只是防误选一大把导致上传过久；要完全放开就把它设成 50 或 Infinity。
   var MAX_BATCH = 200
 
+  /* ---------------- 多语言按钮定位 ----------------
+   * demo 的按钮靠 aria-label 区分，而 aria-label 跟着界面语言变（中/英）。
+   * 只写中文会在切到英文后静默失效（发送、开关、侧边栏），这里统一兜住。 */
+  var LABELS = {
+    send: ['发送', 'Send'],
+    think: ['深度思考', 'DeepThink'],
+    search: ['智能搜索', 'Search'],
+    sidebar: ['打开边栏', 'Open sidebar'],
+    upload: ['上传文件', 'Upload files'],
+  }
+  function byLabel(names, scope) {
+    var base = scope === undefined ? '#root ' : scope
+    var q = names
+      .map(function (n) {
+        return base + '[aria-label="' + n + '"]'
+      })
+      .join(',')
+    return document.querySelector(q)
+  }
+
   /* ---------------- 找 demo 的上传 input ---------------- */
   function findUploadInput() {
     var list = document.querySelectorAll('input[type="file"]')
@@ -856,11 +876,11 @@
     // 深度思考 / 智能搜索：直接切换聊天页的同一组开关
     function syncPills() {
       var map = [
-        ['think', '#root [aria-label="深度思考"]'],
-        ['search', '#root [aria-label="智能搜索"]'],
+        ['think', byLabel(LABELS.think)],
+        ['search', byLabel(LABELS.search)],
       ]
       map.forEach(function (pair) {
-        var src = document.querySelector(pair[1])
+        var src = pair[1]
         var pill = box.querySelector('[data-act="' + pair[0] + '"]')
         if (src && pill) {
           pill.classList.toggle('on', src.getAttribute('aria-pressed') === 'true')
@@ -889,9 +909,7 @@
           setVoiceMode(true)
         }
       } else if (act === 'think' || act === 'search') {
-        var target = document.querySelector(
-          act === 'think' ? '#root [aria-label="深度思考"]' : '#root [aria-label="智能搜索"]'
-        )
+        var target = byLabel(act === 'think' ? LABELS.think : LABELS.search)
         if (target) target.click()
         syncPills()
       } else if (act === 'plus') {
@@ -932,7 +950,7 @@
   function autoSend() {
     var tries = 0
     ;(function tick() {
-      var btn = document.querySelector('#root [aria-label="发送"]')
+      var btn = byLabel(LABELS.send)
       if (btn && btn.getAttribute('aria-disabled') !== 'true') {
         if (document.activeElement && document.activeElement.blur) document.activeElement.blur()
         btn.click()
@@ -1236,7 +1254,7 @@
           document.getElementById('__cam_prev').classList.contains('on'))
 
       if (trusted && !overlayOpen && e.clientX < 240 && e.clientY < 260) {
-        var menu = document.querySelector('[aria-label="打开边栏"]')
+        var menu = byLabel(LABELS.sidebar, '')
         if (menu && menu !== t && !menu.contains(t)) {
           var r = menu.getBoundingClientRect()
           var pad = 32
@@ -1407,7 +1425,12 @@
     function (e) {
       var t = e.target
       if (!t || t.nodeType !== 1) return
-      var hit = t.closest("[aria-label='打开边栏'],[aria-label='上传文件']")
+      var near = ['打开边栏', 'Open sidebar', '上传文件', 'Upload files']
+        .map(function (n) {
+          return "[aria-label='" + n + "']"
+        })
+        .join(',')
+      var hit = t.closest(near)
       if (!hit) return
       var root = document.getElementById('root')
       if (!root) return
