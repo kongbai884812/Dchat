@@ -35,6 +35,129 @@
     sidebar: ['打开边栏', 'Open sidebar'],
     upload: ['上传文件', 'Upload files'],
   }
+
+  /* ---------------- 界面文案（跟随 App 语言） ----------------
+   * camera.js 是独立脚本，读不到 React 的 i18n；语言存在 localStorage 的
+   * chat-demo:locale（zh-CN / en-US），每次取词时现读，切语言后立刻生效。 */
+  var I18N = {
+    'zh-CN': {
+      recognize: '图像识别',
+      takePhoto: '拍照',
+      exit: '退出',
+      crop: '裁剪',
+      add: '添加',
+      send: '发送',
+      keyboard: '键盘',
+      voice: '语音输入',
+      previewAlt: '拍摄结果',
+      placeholder: '发消息或按住说话',
+      hold: '按住 说话',
+      holdCancel: '松开手指，取消发送',
+      holdSend: '松开发送，上滑取消',
+      canceled: '已取消',
+      recognizing: '识别中…',
+      think: '深度思考',
+      search: '智能搜索',
+      moreCamera: '拍照',
+      moreGallery: '相册',
+      moreFile: '文件',
+      chipWhat: '这是什么',
+      chipAnalyze: '分析一下',
+      chipWhatToDo: '怎么办',
+      chipExplain: '解释一下',
+      cropTitle: '裁剪',
+      cropDone: '完成',
+      cropAlt: '待裁剪图片',
+      addedPhoto: '照片已加入',
+      imageAddedTapSend: '图片已加入，点发送即可',
+      noUploadEntry: '没找到上传入口，请手动点「上传文件」',
+      noUploadEntryShort: '没找到上传入口，请手动添加',
+      voiceInChat: '语音输入请在聊天页使用',
+      torchUnsupported: '这台设备不支持闪光灯常亮',
+      torchFailed: '闪光灯切换失败',
+      switchCameraFailed: '切换摄像头失败',
+      cameraFallback: '相机打不开，改用系统相机',
+      notReady: '画面还没准备好',
+      captureFailed: '拍照失败',
+      cropTooSmall: '选区太小',
+      cropFailed: '裁剪失败',
+      cropped: '已裁剪',
+      importEntryMissing: '找不到导入入口',
+      slimFailed: '精简失败，文件可能不是有效 ZIP',
+      tooMany: function (n) { return '一次最多 ' + n + ' 张，已取前 ' + n + ' 张' },
+      addedImages: function (n) { return '已加入 ' + n + ' 张图片' },
+      feedFailed: function (m) { return '投喂失败：' + m },
+      slimDone: function (mb) { return '已精简到 ' + mb + 'MB，正在导入…' },
+      slimImportFailed: function (m) { return '精简导入失败：' + m },
+      readSliceFailed: function (off) { return '读取片段失败 @ ' + off }
+    },
+    'en-US': {
+      recognize: 'Image recognition',
+      takePhoto: 'Take photo',
+      exit: 'Close',
+      crop: 'Crop',
+      add: 'Add',
+      send: 'Send',
+      keyboard: 'Keyboard',
+      voice: 'Voice input',
+      previewAlt: 'Captured photo',
+      placeholder: 'Message, or hold to talk',
+      hold: 'Hold to talk',
+      holdCancel: 'Release to cancel',
+      holdSend: 'Release to send · slide up to cancel',
+      canceled: 'Canceled',
+      recognizing: 'Transcribing…',
+      think: 'DeepThink',
+      search: 'Search',
+      moreCamera: 'Camera',
+      moreGallery: 'Gallery',
+      moreFile: 'Files',
+      chipWhat: "What's this",
+      chipAnalyze: 'Analyze it',
+      chipWhatToDo: 'What should I do',
+      chipExplain: 'Explain this',
+      cropTitle: 'Crop',
+      cropDone: 'Done',
+      cropAlt: 'Image to crop',
+      addedPhoto: 'Photo added',
+      imageAddedTapSend: 'Image added — tap send',
+      noUploadEntry: 'Upload entry not found — tap \u201cUpload files\u201d manually',
+      noUploadEntryShort: 'Upload entry not found — add it manually',
+      voiceInChat: 'Use voice input on the chat page',
+      torchUnsupported: "This device can't keep the torch on",
+      torchFailed: 'Could not toggle the torch',
+      switchCameraFailed: 'Could not switch camera',
+      cameraFallback: 'Camera unavailable — falling back to the system camera',
+      notReady: 'Preview not ready yet',
+      captureFailed: 'Capture failed',
+      cropTooSmall: 'Selection too small',
+      cropFailed: 'Crop failed',
+      cropped: 'Cropped',
+      importEntryMissing: 'Import entry not found',
+      slimFailed: 'Slimming failed — is it a valid ZIP?',
+      tooMany: function (n) { return 'Up to ' + n + ' photos at a time — kept the first ' + n },
+      addedImages: function (n) { return 'Added ' + n + ' photos' },
+      feedFailed: function (m) { return 'Upload failed: ' + m },
+      slimDone: function (mb) { return 'Slimmed to ' + mb + 'MB, importing…' },
+      slimImportFailed: function (m) { return 'Slim import failed: ' + m },
+      readSliceFailed: function (off) { return 'Failed to read chunk @ ' + off }
+    }
+  }
+  function locale() {
+    try {
+      var v = localStorage.getItem('chat-demo:locale')
+      if (v && v.indexOf('en') === 0) return 'en-US'
+    } catch (e) {}
+    return 'zh-CN'
+  }
+  function t(key) {
+    var pack = I18N[locale()] || I18N['zh-CN']
+    var val = pack[key]
+    if (val === undefined) val = I18N['zh-CN'][key]
+    if (typeof val === 'function') return val.apply(null, Array.prototype.slice.call(arguments, 1))
+    return val
+  }
+
   function byLabel(names, scope) {
     var base = scope === undefined ? '#root ' : scope
     var q = names
@@ -208,7 +331,7 @@
     if (!files.length) return Promise.resolve(0)
 
     if (files.length > MAX_BATCH) {
-      toast('一次最多 ' + MAX_BATCH + ' 张，已取前 ' + MAX_BATCH + ' 张')
+      toast(t('tooMany', MAX_BATCH))
       files = files.slice(0, MAX_BATCH)
     }
 
@@ -226,10 +349,10 @@
     return p.then(function () {
       return deliver(out).then(function (ok) {
         if (ok) {
-          toast(out.length > 1 ? '已加入 ' + out.length + ' 张图片' : '照片已加入')
+          toast(out.length > 1 ? t('addedImages', out.length) : t('addedPhoto'))
           return out.length
         }
-        toast('没找到上传入口，请手动点「上传文件」')
+        toast(t('noUploadEntry'))
         return 0
       })
     })
@@ -264,7 +387,7 @@
     // 我们来压缩反而会吞掉"不支持该格式"的提示
     deliver(picked).then(function (ok) {
       if (ok) closePanel()
-      else toast('没找到上传入口，请手动点「上传文件」')
+      else toast(t('noUploadEntry'))
     })
   })
 
@@ -410,7 +533,7 @@
     view.innerHTML =
       '<div class="__cv_top">' +
       '  <button type="button" data-act="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-      '  <div class="__cv_title">图像识别</div>' +
+      '  <div class="__cv_title">' + t('recognize') + '</div>' +
       '  <button type="button" data-act="flip"><svg viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4v5h-5"/></svg></button>' +
       '</div>' +
       '<div id="__cam_stage">' +
@@ -419,7 +542,7 @@
       '</div>' +
       '<div id="__cam_bottom">' +
       '  <button type="button" class="__cb_side" data-act="torch"><svg viewBox="0 0 24 24"><path d="M13 2.5 5 13.5h6l-1 8 9-12h-6z"/></svg></button>' +
-      '  <button type="button" id="__cam_shutter" aria-label="拍照"></button>' +
+      '  <button type="button" id="__cam_shutter" aria-label="' + t('takePhoto') + '"></button>' +
       '  <button type="button" class="__cb_side" data-act="gallery"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 15.5l-4.5-4.5L7 20"/></svg></button>' +
       '</div>'
     document.body.appendChild(view)
@@ -452,13 +575,13 @@
     if (!cam.track || !cam.track.applyConstraints) return
     var caps = cam.track.getCapabilities ? cam.track.getCapabilities() : {}
     if (!caps || !caps.torch) {
-      toast('这台设备不支持闪光灯常亮')
+      toast(t('torchUnsupported'))
       return
     }
     cam.torch = !cam.torch
     cam.track.applyConstraints({ advanced: [{ torch: cam.torch }] }).catch(function () {
       cam.torch = false
-      toast('闪光灯切换失败')
+      toast(t('torchFailed'))
     })
     var btn = document.querySelector('#__cam_view [data-act="torch"]')
     if (btn) btn.classList.toggle('off', !cam.torch)
@@ -539,7 +662,7 @@
     cam.facing = cam.facing === 'environment' ? 'user' : 'environment'
     startStream(cam.facing).catch(function () {
       cam.facing = cam.facing === 'environment' ? 'user' : 'environment'
-      toast('切换摄像头失败')
+      toast(t('switchCameraFailed'))
     })
   }
 
@@ -604,6 +727,8 @@
   }
 
   function openCamera() {
+    var ttl = cam.overlay && cam.overlay.querySelector('.__cv_title')
+    if (ttl) ttl.textContent = t('recognize')
     if (!camSupported()) {
       cameraInput.click()
       return
@@ -620,7 +745,7 @@
     cam.facing = 'environment'
     startStream(cam.facing).catch(function () {
       closeCamera() // 连同刚压入的历史一起回退
-      toast('相机打不开，改用系统相机')
+      toast(t('cameraFallback'))
       cameraInput.click()
     })
   }
@@ -651,7 +776,7 @@
     if (cam.busy) return
     var v = cam.video
     if (!v || !v.videoWidth) {
-      toast('画面还没准备好')
+      toast(t('notReady'))
       return
     }
     cam.busy = true
@@ -674,7 +799,7 @@
       function (blob) {
         cam.busy = false
         if (!blob) {
-          toast('拍照失败')
+          toast(t('captureFailed'))
           return
         }
         var file = new File([blob], 'photo_' + Date.now() + '.jpg', {
@@ -690,51 +815,58 @@
   }
 
   /* ================= 拍完的预览 ================= */
-  var CHIPS = ['这是什么', '分析一下', '怎么办', '解释一下']
+  var CHIPS = function () {
+    return [t('chipWhat'), t('chipAnalyze'), t('chipWhatToDo'), t('chipExplain')]
+  }
 
   function showPreview(file, dataUrl) {
     setModal(1)
     injectCamCss()
     var box = document.getElementById('__cam_prev')
+    if (box && box.__locale !== locale()) {
+      box.remove()
+      box = null
+    }
     if (!box) {
       box = document.createElement('div')
       box.id = '__cam_prev'
       box.innerHTML =
         '<div class="__pv_top">' +
-        '  <button type="button" data-act="exit" aria-label="退出">' +
+        '  <button type="button" data-act="exit" aria-label="' + t('exit') + '">' +
         '    <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
         '  <span class="__pv_spacer"></span>' +
-        '  <button type="button" data-act="crop" aria-label="裁剪">' +
+        '  <button type="button" data-act="crop" aria-label="' + t('crop') + '">' +
         '    <svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M15 4h5v5"/>' +
         '    <path d="M20 15v5h-5"/><path d="M9 20H4v-5"/></svg></button>' +
         '</div>' +
-        '<div class="__pv_img"><img alt="拍摄结果" /></div>' +
+        '<div class="__pv_img"><img alt="' + t('previewAlt') + '" /></div>' +
         '<div id="__cam_chips"></div>' +
         '<div id="__pv_composer">' +
-        '  <textarea id="__pv_text" rows="1" placeholder="发消息或按住说话"></textarea>' +
-        '  <div id="__pv_hold">按住 说话</div>' +
+        '  <textarea id="__pv_text" rows="1" placeholder="' + t('placeholder') + '"></textarea>' +
+        '  <div id="__pv_hold">' + t('hold') + '</div>' +
         '  <div id="__pv_more">' +
-        '    <button type="button" data-act="more-camera">拍照</button>' +
-        '    <button type="button" data-act="more-gallery">相册</button>' +
-        '    <button type="button" data-act="more-file">文件</button>' +
+        '    <button type="button" data-act="more-camera">' + t('moreCamera') + '</button>' +
+        '    <button type="button" data-act="more-gallery">' + t('moreGallery') + '</button>' +
+        '    <button type="button" data-act="more-file">' + t('moreFile') + '</button>' +
         '  </div>' +
         '  <div class="__pv_tools">' +
         '    <button type="button" class="__pv_pill" data-act="think">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 4.5c2.2 0 3.6 1.3 3.9 3.1 1.4.5 2.3 1.8 2.3 3.3 0 1.6-1 3-2.6 3.4-.4 1.7-1.9 3-3.9 3"/>' +
         '      <path d="M12 4.5c-2.6 0-4.4 1.8-4.4 4 0 .5.1.9.2 1.3"/>' +
         '      <path d="M7.8 9.8c-.3.4-.5.9-.5 1.5 0 1 .5 1.8 1.3 2.3"/>' +
-        '      <path d="M14 10.2l1.6 1.4-1.6 1.4"/></svg>深度思考</button>' +
+        '      <path d="M14 10.2l1.6 1.4-1.6 1.4"/></svg>' + t('think') + '</button>' +
         '    <button type="button" class="__pv_pill on" data-act="search">' +
         '      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/>' +
-        '      <path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.4 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.4-3.6-8.5S9.6 5.9 12 3.5z"/></svg>智能搜索</button>' +
+        '      <path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.4 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.4-3.6-8.5S9.6 5.9 12 3.5z"/></svg>' + t('search') + '</button>' +
         '    <span class="__pv_grow"></span>' +
-        '    <button type="button" class="__pv_rnd" data-act="plus" aria-label="添加">' +
+        '    <button type="button" class="__pv_rnd" data-act="plus" aria-label="' + t('add') + '">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>' +
-        '    <button type="button" class="__pv_main" data-act="main" aria-label="发送">' +
+        '    <button type="button" class="__pv_main" data-act="main" aria-label="' + t('send') + '">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 19V6M6 11.5 12 5.5l6 6"/></svg></button>' +
         '  </div>' +
         '</div>'
       document.body.appendChild(box)
+      box.__locale = locale()
     }
 
     var img = box.querySelector('img')
@@ -748,7 +880,7 @@
 
     var chipBox = box.querySelector('#__cam_chips')
     chipBox.innerHTML = ''
-    CHIPS.forEach(function (label) {
+    CHIPS().forEach(function (label) {
       var b = document.createElement('button')
       b.type = 'button'
       b.textContent = label + ' →'
@@ -777,7 +909,7 @@
       var hasText = !!textEl.value.trim()
       mainBtn.classList.toggle('send', !voice && hasText)
       mainBtn.innerHTML = voice ? ICON_KB : hasText ? ICON_SEND : ICON_MIC
-      mainBtn.setAttribute('aria-label', voice ? '键盘' : hasText ? '发送' : '语音输入')
+      mainBtn.setAttribute('aria-label', voice ? t('keyboard') : hasText ? t('send') : t('voice'))
     }
 
     function setVoiceMode(on) {
@@ -787,10 +919,10 @@
         if (window.__voiceCancel) window.__voiceCancel()
         if (window.__voiceWarm) window.__voiceWarm()
         holdEl.classList.remove('rec', 'cancel')
-        holdEl.textContent = '按住 说话'
+        holdEl.textContent = t('hold')
       } else {
         holdEl.classList.remove('rec')
-        holdEl.textContent = '按住 说话'
+        holdEl.textContent = t('hold')
         if (window.__voiceRelease) window.__voiceRelease()
       }
       syncMain()
@@ -811,10 +943,10 @@
       holdEl.classList.toggle('rec', hold.down)
       holdEl.classList.toggle('cancel', hold.down && hold.cancel)
       holdEl.textContent = !hold.down
-        ? '按住 说话'
+        ? t('hold')
         : hold.cancel
-          ? '松开手指，取消发送'
-          : '松开发送，上滑取消'
+          ? t('holdCancel')
+          : t('holdSend')
     }
 
     holdEl.addEventListener('pointerdown', function (e) {
@@ -828,7 +960,7 @@
           holdEl.setPointerCapture(e.pointerId)
         } catch (err) {}
       }
-      holdEl.textContent = '松开发送，上滑取消'
+      holdEl.textContent = t('holdSend')
       holdEl.classList.add('rec')
       if (window.__voiceStart) window.__voiceStart()
     })
@@ -849,7 +981,7 @@
       var canceled = hold.cancel
       hold.cancel = false
       holdEl.classList.remove('rec', 'cancel')
-      holdEl.textContent = canceled ? '已取消' : '识别中…'
+      holdEl.textContent = canceled ? t('canceled') : t('recognizing')
       if (window.__voiceFinish) window.__voiceFinish(canceled)
       if (canceled) {
         setTimeout(function () {
@@ -866,7 +998,7 @@
         textEl.value = transcript
         textEl.dispatchEvent(new Event('input', { bubbles: true }))
         setVoiceMode(false)
-        holdEl.textContent = '按住 说话'
+        holdEl.textContent = t('hold')
       })
     }
 
@@ -921,13 +1053,13 @@
         deliver([current.file]).then(function (ok) {
           hidePreview()
           if (!ok) {
-            toast('没找到上传入口')
+            toast(t('noUploadEntryShort'))
             return
           }
           if (window.__dchatPick) window.__dchatPick(kind)
         })
       } else if (act === 'mic') {
-        toast('语音输入请在聊天页使用')
+        toast(t('voiceInChat'))
       }
     }
 
@@ -938,7 +1070,7 @@
   function sendPhoto(file, text) {
     deliver([file]).then(function (ok) {
       if (!ok) {
-        toast('没找到上传入口，请手动添加')
+        toast(t('noUploadEntryShort'))
         return
       }
       if (text) fillComposer(text)
@@ -957,7 +1089,7 @@
         return
       }
       if (++tries > 80) {
-        toast('图片已加入，点发送即可')
+        toast(t('imageAddedTapSend'))
         return
       }
       setTimeout(tick, 200)
@@ -1003,11 +1135,11 @@
     box.innerHTML =
       '<div class="__cr_top">' +
       '  <button type="button" data-act="cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-      '  <div class="__cr_title">裁剪</div>' +
-      '  <button type="button" class="__cr_text" data-act="ok">完成</button>' +
+      '  <div class="__cr_title">' + t('cropTitle') + '</div>' +
+      '  <button type="button" class="__cr_text" data-act="ok">' + t('cropDone') + '</button>' +
       '</div>' +
       '<div class="__cr_stage">' +
-      '  <img alt="待裁剪图片" />' +
+      '  <img alt="' + t('cropAlt') + '" />' +
       '  <div class="__cr_rect">' +
       '    <i class="__cr_h __cr_nw" data-h="nw"></i><i class="__cr_h __cr_ne" data-h="ne"></i>' +
       '    <i class="__cr_h __cr_sw" data-h="sw"></i><i class="__cr_h __cr_se" data-h="se"></i>' +
@@ -1128,7 +1260,7 @@
       var w = Math.min(b.w - x, r.width)
       var h = Math.min(b.h - y, r.height)
       if (w < 8 || h < 8) {
-        toast('选区太小')
+        toast(t('cropTooSmall'))
         return
       }
 
@@ -1147,7 +1279,7 @@
       c.toBlob(
         function (blob) {
           if (!blob) {
-            toast('裁剪失败')
+            toast(t('cropFailed'))
             return
           }
           var f = new File([blob], 'crop_' + Date.now() + '.jpg', {
@@ -1163,7 +1295,7 @@
           current.url = URL.createObjectURL(f)
           previewImg.src = current.url
           close()
-          toast('已裁剪')
+          toast(t('cropped'))
         },
         'image/jpeg',
         0.92
@@ -1283,7 +1415,12 @@
   ;(function () {
     var st = document.createElement('style')
     // 只扩大可点击范围，不动图案本身
-    st.textContent = '[aria-label="打开边栏"]:active{opacity:.6}'
+    st.textContent =
+      LABELS.sidebar
+        .map(function (n) {
+          return '[aria-label="' + n + '"]:active'
+        })
+        .join(',') + '{opacity:.6}'
     document.head.appendChild(st)
   })()
 
@@ -1309,7 +1446,7 @@
   function feedImport(file) {
     var input = findImportInput()
     if (!input) {
-      toast('找不到导入入口')
+      toast(t('importEntryMissing'))
       return
     }
     try {
@@ -1318,7 +1455,7 @@
       input.files = dt.files
       input.dispatchEvent(new Event('change', { bubbles: true }))
     } catch (e) {
-      toast('投喂失败：' + e.message)
+      toast(t('feedFailed', e.message))
     }
   }
 
@@ -1326,7 +1463,7 @@
   window.__slimReady = function (size) {
     if (!size || size < 0) {
       slimBusy = false
-      toast('精简失败，文件可能不是有效 ZIP')
+      toast(t('slimFailed'))
       return
     }
     try {
@@ -1335,14 +1472,14 @@
       for (var off = 0; off < size; off += CH) {
         var n = Math.min(CH, size - off)
         var b64 = window.NativeShell.readChunk(off, n)
-        if (!b64) throw new Error('读取片段失败 @ ' + off)
+        if (!b64) throw new Error(t('readSliceFailed', off))
         parts.push(b64ToBytes(b64))
       }
       var file = new File(parts, 'slim-archive.zip', { type: 'application/zip' })
       feedImport(file)
-      toast('已精简到 ' + (size / 1024 / 1024).toFixed(1) + 'MB，正在导入…')
+      toast(t('slimDone', (size / 1024 / 1024).toFixed(1)))
     } catch (e) {
-      toast('精简导入失败：' + e.message)
+      toast(t('slimImportFailed', e.message))
     } finally {
       slimBusy = false
     }
@@ -1379,8 +1516,9 @@
       '#__cam_prev button:active{opacity:.75}',
       '#__diag_btn:active{opacity:.6!important}',
       // 这些按钮不是 <button>，上面那条选择器够不到，单独补（必须 !important）
-      "[aria-label='打开边栏']:active,[aria-label='上传文件']:active,",
-      "[aria-label='添加附件']:active,[aria-label='语音输入']:active{",
+      "[aria-label='打开边栏']:active,[aria-label='Open sidebar']:active,",
+      "[aria-label='上传文件']:active,[aria-label='Upload files']:active,",
+      "[aria-label='语音输入']:active,[aria-label='Voice input']:active{",
       '  transform:translateY(1px)!important;',
       '  box-shadow:inset 0 2px 6px rgba(0,0,0,.20), inset 0 -1px 0 rgba(255,255,255,.4)!important;',
       '  filter:brightness(.93)!important;',
