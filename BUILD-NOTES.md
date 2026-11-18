@@ -30,7 +30,14 @@ curl -s -G 127.0.0.1:3090/app/export \
   -H @/root/.dsh/.bridge_headers
 ```
 
-## 本轮功能（1.30）
+## 本轮功能（1.31）
+
+- 首次启动且系统是英文时，相机界面也走英文（之前没有 `chat-demo:locale` 就默认中文，和 App 不一致）
+- `autoSend()` 从 80×200ms 轮询改成 `MutationObserver`：按钮一出现就点，最快，也不再空转
+- `LABELS` 里「发送/深度思考/智能搜索」改为从 `I18N` 派生，改文案不用改两处
+- 删掉无人调用的 `Bridge.pickZip()`（约 14 行）及其悬空注解；`LABELS.upload` 改由点击过渡复用
+
+## 上一轮功能（1.30）
 
 - 拍照后的整套 UI（取景器标题、预览页、裁剪页、按住说话、快捷提问、各种 toast）跟随 App 语言，英文界面下不再显示中文
 - `camera.js` 自带 `I18N` 词典（49 个键 × 2 语言）+ `t()`，现读 `localStorage['chat-demo:locale']`；语言变化后预览页会重建

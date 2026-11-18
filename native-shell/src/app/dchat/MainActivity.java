@@ -516,15 +516,6 @@ public class MainActivity extends Activity {
 
     /** 暴露给网页：精简导入 */
     public class Bridge {
-        @JavascriptInterface
-        public void pickZip() {
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    openZipPicker();
-                }
-            });
-        }
-
         private java.io.RandomAccessFile dlRaf;
         private java.io.File dlFile;
         private long dlTotal;

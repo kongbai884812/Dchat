@@ -25,16 +25,6 @@
   // 这里只是防误选一大把导致上传过久；要完全放开就把它设成 50 或 Infinity。
   var MAX_BATCH = 200
 
-  /* ---------------- 多语言按钮定位 ----------------
-   * demo 的按钮靠 aria-label 区分，而 aria-label 跟着界面语言变（中/英）。
-   * 只写中文会在切到英文后静默失效（发送、开关、侧边栏），这里统一兜住。 */
-  var LABELS = {
-    send: ['发送', 'Send'],
-    think: ['深度思考', 'DeepThink'],
-    search: ['智能搜索', 'Search'],
-    sidebar: ['打开边栏', 'Open sidebar'],
-    upload: ['上传文件', 'Upload files'],
-  }
 
   /* ---------------- 界面文案（跟随 App 语言） ----------------
    * camera.js 是独立脚本，读不到 React 的 i18n；语言存在 localStorage 的
@@ -146,9 +136,11 @@
   function locale() {
     try {
       var v = localStorage.getItem('chat-demo:locale')
-      if (v && v.indexOf('en') === 0) return 'en-US'
+      if (v === 'en-US' || v === 'zh-CN') return v
     } catch (e) {}
-    return 'zh-CN'
+    // 和 App 一致：没存过就跟随系统语言（App 侧逻辑见 services/settings.ts）
+    var nav = (navigator.language || 'zh').toLowerCase()
+    return nav.indexOf('zh') === 0 ? 'zh-CN' : 'en-US'
   }
   function t(key) {
     var pack = I18N[locale()] || I18N['zh-CN']
@@ -156,6 +148,18 @@
     if (val === undefined) val = I18N['zh-CN'][key]
     if (typeof val === 'function') return val.apply(null, Array.prototype.slice.call(arguments, 1))
     return val
+  }
+
+  /* ---------------- 多语言按钮定位 ----------------
+   * demo 的按钮靠 aria-label 区分，文案跟着界面语言变（中/英）。
+   * 壳层自己会显示的文案直接取 I18N，避免两边各写一份；侧边栏/上传是 demo 的
+   * 文案，壳层不显示，只能在这里列出来。 */
+  var LABELS = {
+    send: [I18N['zh-CN'].send, I18N['en-US'].send],
+    think: [I18N['zh-CN'].think, I18N['en-US'].think],
+    search: [I18N['zh-CN'].search, I18N['en-US'].search],
+    sidebar: ['打开边栏', 'Open sidebar'],
+    upload: ['上传文件', 'Upload files'],
   }
 
   function byLabel(names, scope) {
@@ -1080,20 +1084,48 @@
   }
 
   function autoSend() {
-    var tries = 0
-    ;(function tick() {
+    var done = false
+    var obs = null
+    var timer = null
+
+    function fire(btn) {
+      if (done) return
+      done = true
+      if (obs) obs.disconnect()
+      if (timer) clearTimeout(timer)
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur()
+      btn.click()
+    }
+
+    function tryFire() {
       var btn = byLabel(LABELS.send)
       if (btn && btn.getAttribute('aria-disabled') !== 'true') {
-        if (document.activeElement && document.activeElement.blur) document.activeElement.blur()
-        btn.click()
-        return
+        fire(btn)
+        return true
       }
-      if (++tries > 80) {
-        toast(t('imageAddedTapSend'))
-        return
-      }
-      setTimeout(tick, 200)
-    })()
+      return false
+    }
+
+    if (tryFire()) return
+    // 等 React 把发送按钮渲染出来：一有变动就试，比定时轮询快，也不会空转
+    var root = document.getElementById('root')
+    if (root && window.MutationObserver) {
+      obs = new MutationObserver(function () {
+        tryFire()
+      })
+      obs.observe(root, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['aria-label', 'aria-disabled'],
+      })
+    }
+    timer = setTimeout(function () {
+      if (done) return
+      done = true
+      if (obs) obs.disconnect()
+      toast(t('imageAddedTapSend'))
+    }, 16000)
   }
 
   /* ================= 拍完再框选一块（裁剪） ================= */
@@ -1563,7 +1595,8 @@
     function (e) {
       var t = e.target
       if (!t || t.nodeType !== 1) return
-      var near = ['打开边栏', 'Open sidebar', '上传文件', 'Upload files']
+      var near = LABELS.sidebar
+        .concat(LABELS.upload)
         .map(function (n) {
           return "[aria-label='" + n + "']"
         })

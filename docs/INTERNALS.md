@@ -141,7 +141,8 @@ demo 本身能接受附件缺失（保留元数据、不参与后续请求），
 ## 界面语言：别把中文写死
 
 `camera.js` 是独立脚本，读不到 React 的 i18n 上下文，所以它自己维护一份
-`I18N`（`src` 里 49 个键，中英各一套）并现读 `localStorage['chat-demo:locale']`：
+`I18N`（49 个键，中英各一套）并现读 `localStorage['chat-demo:locale']`；
+没有这个键时**跟随系统语言**（和 `services/settings.ts` 的 `initialLocale()` 同一规则）：
 
 - `t('hold')` 取文案，切到英文后立刻生效，不用重启；
 - 取景器标题在每次打开时刷新，预览页在语言变化后**重建 DOM**（`box.__locale` 记着上次语言）；
