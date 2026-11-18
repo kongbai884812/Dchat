@@ -305,10 +305,19 @@
     "border:1.5px solid rgba(255,255,255,.65);background:transparent;color:#fff;",
     "display:flex;align-items:center;justify-content:center;padding:0;line-height:0}",
     "#__pv_composer .__pv_rnd svg{width:18px;height:18px}",
-    "#__pv_composer .__pv_send{flex:none;width:34px;height:34px;border-radius:50%;border:0;",
-    "background:#4d6bfe;color:#fff;display:flex;align-items:center;justify-content:center;",
-    "padding:0;line-height:0}",
-    "#__pv_composer .__pv_send svg{width:18px;height:18px;stroke-width:2.4}",
+    "#__pv_composer .__pv_main{flex:none;width:34px;height:34px;border-radius:50%;",
+    "border:1.5px solid rgba(255,255,255,.65);background:transparent;color:#fff;",
+    "display:flex;align-items:center;justify-content:center;padding:0;line-height:0;",
+    "transition:background .18s,border-color .18s}",
+    "#__pv_composer .__pv_main.send{border-color:#4d6bfe;background:#4d6bfe}",
+    "#__pv_composer .__pv_main svg{width:18px;height:18px}",
+    "#__pv_composer .__pv_main.send svg{stroke-width:2.4}",
+    "#__pv_hold{display:none;height:44px;margin:4px 0 10px;border-radius:12px;",
+    "background:rgba(255,255,255,.1);color:#fff;align-items:center;justify-content:center;",
+    "font-size:15px;user-select:none;-webkit-user-select:none;touch-action:none}",
+    "#__pv_composer.voice #__pv_text{display:none}",
+    "#__pv_composer.voice #__pv_hold{display:flex}",
+    "#__pv_composer.voice #__pv_hold.rec{background:rgba(77,107,254,.28)}",
     /* demo 自带的删除按钮只在 :hover 显示，手机上永远看不见；
        这里强制常显，并做成右上角红色圆形 × */
     ".attachment-ed6f47 .remove-ed6f47{opacity:1!important;width:20px!important;height:20px!important;",
@@ -598,6 +607,7 @@
         '<div id="__cam_chips"></div>' +
         '<div id="__pv_composer">' +
         '  <textarea id="__pv_text" rows="1" placeholder="发消息或按住说话"></textarea>' +
+        '  <div id="__pv_hold">按住 说话</div>' +
         '  <div class="__pv_tools">' +
         '    <button type="button" class="__pv_pill" data-act="think">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 4.5c2.2 0 3.6 1.3 3.9 3.1 1.4.5 2.3 1.8 2.3 3.3 0 1.6-1 3-2.6 3.4-.4 1.7-1.9 3-3.9 3"/>' +
@@ -610,10 +620,7 @@
         '    <span class="__pv_grow"></span>' +
         '    <button type="button" class="__pv_rnd" data-act="plus" aria-label="添加">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>' +
-        '    <button type="button" class="__pv_rnd" data-act="mic" aria-label="语音输入">' +
-        '      <svg viewBox="0 0 24 24"><rect x="9.2" y="3" width="5.6" height="11" rx="2.8"/>' +
-        '      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg></button>' +
-        '    <button type="button" class="__pv_send" data-act="send" aria-label="发送">' +
+        '    <button type="button" class="__pv_main" data-act="main" aria-label="发送">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 19V6M6 11.5 12 5.5l6 6"/></svg></button>' +
         "  </div>" +
         "</div>";
@@ -641,12 +648,86 @@
       chipBox.appendChild(b);
     });
 
-    // 输入框随内容长高
+    var composer = box.querySelector("#__pv_composer");
+    var mainBtn = box.querySelector('[data-act="main"]');
+    var holdEl = box.querySelector("#__pv_hold");
     var textEl = box.querySelector("#__pv_text");
+
+    var ICON_SEND = '<svg viewBox="0 0 24 24"><path d="M12 19V6M6 11.5 12 5.5l6 6"/></svg>';
+    var ICON_MIC =
+      '<svg viewBox="0 0 24 24"><rect x="9.2" y="3" width="5.6" height="11" rx="2.8"/>' +
+      '<path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>';
+    var ICON_KB =
+      '<svg viewBox="0 0 24 24"><rect x="2.6" y="6" width="18.8" height="12" rx="2.4"/>' +
+      '<path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>';
+
+    /** 和主页面同一个规则：有字→发送，没字→麦克风，语音模式→键盘 */
+    function syncMain() {
+      var voice = composer.classList.contains("voice");
+      var hasText = !!textEl.value.trim();
+      mainBtn.classList.toggle("send", !voice && hasText);
+      mainBtn.innerHTML = voice ? ICON_KB : hasText ? ICON_SEND : ICON_MIC;
+      mainBtn.setAttribute(
+        "aria-label",
+        voice ? "键盘" : hasText ? "发送" : "语音输入"
+      );
+    }
+
+    function setVoiceMode(on) {
+      composer.classList.toggle("voice", on);
+      if (on) {
+        textEl.blur();
+        holdEl.textContent = "按住 说话";
+      } else {
+        holdEl.classList.remove("rec");
+        holdEl.textContent = "按住 说话";
+      }
+      syncMain();
+    }
+
+    // 输入框随内容长高，同时联动右下角按钮
     textEl.addEventListener("input", function () {
       textEl.style.height = "auto";
       textEl.style.height = Math.min(96, textEl.scrollHeight) + "px";
+      syncMain();
     });
+
+    // 按住说话：直接复用主页面的录音与识别
+    var hold = { down: false, y: 0 };
+    holdEl.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      hold.down = true;
+      hold.y = e.clientY;
+      holdEl.classList.add("rec");
+      holdEl.textContent = "松开发送，上滑取消";
+      if (holdEl.setPointerCapture) {
+        try { holdEl.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+      if (window.__voiceStart) window.__voiceStart();
+    });
+    function endHold(e) {
+      if (!hold.down) return;
+      hold.down = false;
+      holdEl.classList.remove("rec");
+      holdEl.textContent = "识别中…";
+      var canceled = hold.y - (e && e.clientY ? e.clientY : hold.y) > 56;
+      if (window.__voiceFinish) window.__voiceFinish(canceled);
+    }
+    holdEl.addEventListener("pointerup", endHold);
+    holdEl.addEventListener("pointercancel", function (e) { endHold(e); });
+
+    // 识别结果回到预览页输入框
+    if (window.__voiceSetSink) {
+      window.__voiceSetSink(function (transcript) {
+        textEl.value = transcript;
+        textEl.dispatchEvent(new Event("input", { bubbles: true }));
+        setVoiceMode(false);
+        holdEl.textContent = "按住 说话";
+      });
+    }
+
+    setVoiceMode(false);
+    syncMain();
 
     // 深度思考 / 智能搜索：直接切换聊天页的同一组开关
     function syncPills() {
@@ -672,8 +753,15 @@
         hidePreview();
       } else if (act === "crop") {
         openCrop(current, img);
-      } else if (act === "send") {
-        sendPhoto(current.file, (textEl.value || "").trim());
+      } else if (act === "main") {
+        if (composer.classList.contains("voice")) {
+          setVoiceMode(false);
+          try { textEl.focus(); } catch (err) {}
+        } else if (textEl.value.trim()) {
+          sendPhoto(current.file, textEl.value.trim());
+        } else {
+          setVoiceMode(true);
+        }
       } else if (act === "think" || act === "search") {
         var target = document.querySelector(
           act === "think" ? '#root [aria-label="深度思考"]' : '#root [aria-label="智能搜索"]'
@@ -885,9 +973,12 @@
   }
 
   function hidePreview() {
+    if (window.__voiceSetSink) window.__voiceSetSink(null);
     var box = document.getElementById("__cam_prev");
     if (box) {
       box.classList.remove("on");
+      var composer = box.querySelector("#__pv_composer");
+      if (composer) composer.classList.remove("voice");
       var ta = box.querySelector("#__pv_text");
       if (ta) {
         ta.value = "";
