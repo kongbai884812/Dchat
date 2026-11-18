@@ -105,6 +105,6 @@ SDK=/root/sdk WWW=../www ./build.sh
 两套等价，选一套用：
 
 - `android/` + Gradle：标准的 Capacitor 工程，功能全，但需要电脑和 Android Studio
-- `native-shell/`：约 670 行的精简壳，能在手机上直接出包，体积更小（约 1.9MB vs Gradle 版通常 5MB+）
+- `native-shell/`：约 790 行的精简壳，能在手机上直接出包，体积更小（约 1.9MB vs Gradle 版通常 5MB+）
 
-两者都从 `www/` 取资源，所以改页面只改一处，重跑对应构建即可。
+两者都从 `www/` 取资源，所以改页面只改一处，重跑对应构建即可；`MainActivity.java` 两边是同一份文件（`android/` 里那份由 `native-shell/` 同步过去），改壳逻辑时记得一起拷贝。

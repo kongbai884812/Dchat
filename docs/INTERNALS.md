@@ -114,9 +114,31 @@ demo 本身能接受附件缺失（保留元数据、不参与后续请求），
 1. 自己重写一整套流式 ZIP 导入（社区里有项目这么做，保留附件全量导入，但那需要改前端源码并重新构建）
 2. 按需回填——保留原 ZIP，点开某条消息时再解压对应条目（未实现）
 
+## 语音输入：按住说话
+
+前端在 `usePushToTalk` 里做状态机（`idle` / `recording` / `transcribing`），UI 是 `HoldToTalk`：
+
+1. 按下开始 `getUserMedia`，`ScriptProcessor` 采集 PCM，编码成 16kHz 单声道 WAV；
+2. 松手结束：录音短于 700ms 直接丢弃并提示「说话时间太短」；
+3. 否则 `POST /v1/tools/asr`（multipart WAV，上限 120s / 8MiB），成功即自动发送；
+4. 按住时上移超过 56px 进入取消区，松手丢弃录音、不发送。
+
+**这台机器上的两个坑**（都已在代码里处理）：
+
+- `getUserMedia` 带 `echoCancellation` / `noiseSuppression` 会直接抛 `NotReadableError: Could not start audio source`。现在按「带处理 → 默认 → 全关处理」三档退让，并记住成功的那一档（`preferredVariant`），后续直接命中。
+- 首次打开麦克风要 1~2 秒，按住一两秒根本等不到。进入语音模式时先 `primeMicrophone()` 把流打开并**留着**（`warmStream`），按下时直接复用，退出语音模式才释放。
+
+Manifest 需要 `RECORD_AUDIO`（WebView 的 `AUDIO_CAPTURE` 请求转系统权限框）和 `MODIFY_AUDIO_SETTINGS`（WebRTC 音频路由，缺了部分机型直接给不了音频源）。
+
+## 附件面板与拍照预览页
+
+- 输入框右下角三合一按钮：无文字=麦克风、有文字=发送、语音模式=键盘；`+` 在卡片内展开面板（拍照/相册/文件），展开时加号旋转 45° 变成叉，卡片向上撑高把聊天内容顶上去，不再用全屏遮罩。
+- `www/camera.js` 不再自己画面板，只提供三个隐藏输入源和相机，通过 `window.__dchatPick('camera'|'gallery'|'file')` 被调用；React 侧用 `__openAttachPanel` / `__closeAttachPanel` 与它联动。
+- 拍完的预览页：左上退出、右上裁剪、底部一排快捷提问，输入框复用主界面的同一套交互——它是通过 `window.__voiceStart / __voiceFinish / __voiceCancel / __voiceWarm / __voiceRelease / __voiceSetSink` 直接借用 React 里的录音引擎，识别结果回填到预览页的输入框，点发送才真正发出去。
+
 ## 已知没做的
 
-- **圈选区域提问**：官方 App 拍照后可在图上圈一块再问。需要 canvas 选区 + 裁剪/坐标回传，属于产品功能，暂未实现。
+- **圈选区域提问**：官方 App 拍照后可在图上圈一块再问。裁剪（拖框、四角手柄）已经做了，但还不能把框选区域作为坐标提问。
 - **微信文件**：需要微信 SDK 的分享入口，纯 WebView 做不到。
 
 ## 白屏排查表

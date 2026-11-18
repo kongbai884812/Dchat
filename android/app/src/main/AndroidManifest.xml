@@ -47,4 +47,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- App 内自绘相机（getUserMedia）：WebView 的 onPermissionRequest 会转成系统权限框 -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- 按住说话录音；WebView 的 AUDIO_CAPTURE 请求会转成系统权限框 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- WebRTC 音频路由（回声消除/降噪）需要，缺了会在部分机型上 NotReadableError -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>

@@ -24,6 +24,7 @@
 | appId | `app.dchat` |
 | minSdk / targetSdk | 24 / 36 |
 | 资源加载 | `https://localhost` 映射到应用内资源，**不是 file://** |
+| 当前版本 | 1.28（versionCode 29） |
 | APK 体积 | 约 1.9MB |
 
 两个关键结论：
@@ -38,8 +39,12 @@
 | 能力 | 实现方式 |
 |---|---|
 | 拍照 | 应用内 `getUserMedia` 取景器：快门、前后摄切换、双指捏合变焦（1–4×）、相册入口 |
+| 拍照后 | 预览页复用主界面输入框：左上退出、右上裁剪、快捷提问、按住说话、加号继续添加 |
 | 相册选图 | 系统 Photo Picker（Android 13+），支持多选、无需存储权限 |
 | 文件选择 | Storage Access Framework，接入系统文件管理器 |
+| 附件面板 | 输入框内展开（拍照 / 相册 / 文件），加号旋转成叉，不遮挡输入区 |
+| 语音输入 | 「按住 说话」：按住收音、松手转写并直接发送、上滑取消；接口走 `/v1/tools/asr` |
+| 诊断入口 | 顶栏问号打开 `diag.html`，可查版本、网络、存储与历史导入结果 |
 | 键盘适配 | 读取 `WindowInsets.Type.ime()` 动态抬高输入区，不遮挡输入框 |
 | 顶栏与手势条 | 仅隐藏状态栏并读取刘海高度，底部手势条跟随系统设置 |
 
@@ -69,8 +74,8 @@ APK 由本地 keystore 自签名，未经应用商店或厂商实名认证。安
 
 | 项 | 状态 |
 |---|---|
-| Java 代码 | 671 行，纯 framework API，D8 编译而非 R8 minify，类名原样保留 |
-| `www/camera.js` | 917 行未压缩源码，APK 内与仓库内文件 **sha256 一致** |
+| Java 代码 | 788 行，纯 framework API，D8 编译而非 R8 minify，类名原样保留 |
+| `www/camera.js` | 1429 行未压缩源码，APK 内与仓库内文件 **sha256 一致** |
 | 加密逻辑 | 无。全项目唯一沾边的是 Base64（跨 JS 桥传二进制的编码） |
 | 网络请求 | 仅 demo 自己发往 `api.deepseek.com`，不经过任何中转服务器 |
 | 数据上报 | 无。不收集设备信息、不埋点、不联第三方 SDK |
@@ -94,7 +99,7 @@ chat-demo-app/
 ├── www/                       ← 前端资源（打包进 APK 的就是这里）
 │   ├── index.html             demo 入口（改了 title，注入了诊断按钮）
 │   ├── camera.js              相机 / 相册 / 文件选择的取景器与面板
-│   ├── diag.html              白屏诊断页
+│   ├── diag.html              诊断页（版本 / 网络 / 存储 / 历史导入）
 │   ├── zipcheck.html          ZIP 结构检查页
 │   ├── LICENSE                DeepSeek chat-demo 的 MIT 原文
 │   └── static/                demo 构建产物（第三方产物，仅改过 appName 与一处校验）
