@@ -1,7 +1,7 @@
 # Dchat
 
 把 DeepSeek 开源的 [chat-demo](https://github.com/deepseek-ai/chat-demo) 打包成**可安装的 Android APK**（约 1.9MB）。
-自带相机、相册、文件三个入口，聊天记录可导入，构建全程可以在手机上完成。
+自带相机、相册、文件三个入口，「按住说话」语音输入，聊天记录可导入，构建全程可以在手机上完成。
 
 > **非官方项目**：与 DeepSeek 官方无任何关联，未获授权或背书。"DeepSeek" 是其权利人的商标，
 > 本项目不使用该名称或标识作为自身品牌。前端来自 DeepSeek 开源的 chat-demo（MIT）。
@@ -124,11 +124,23 @@ chat-demo-app/
 └── capacitor.config.json     仅在用 npx cap add android 生成原生工程时使用
 ```
 
+## 更新日志
+
+只列能感觉到的变化，细项见 [BUILD-NOTES.md](BUILD-NOTES.md)。
+
+| 版本 | 变化 |
+|---|---|
+| 1.32 | 拍照后不写字也能直接发送；预览页 `+` / 语音 / 发送三键并排 |
+| 1.31 | 英文系统首次启动也用英文；发图后的自动发送更快 |
+| 1.30 | 拍照后的整套界面（取景器、预览、裁剪、提示）跟随中英语言 |
+| 1.29 | 修复英文界面下发图卡住、开关点不动 |
+| 1.28 | 清理无人使用的代码，输入区收尾 |
+
 ## 文档
 
 | 文件 | 内容 |
 |---|---|
-| [docs/BUILD.md](docs/BUILD.md) | 本地先跑、Gradle 出包、签名、在手机上直接出包 |
+| [docs/BUILD.md](docs/BUILD.md) | 本地预览、出包与签名、改配置、想用 Android Studio |
 | [docs/INTERNALS.md](docs/INTERNALS.md) | 相机与附件链路、数量限制、历史导入、白屏排查 |
 
 ## License
