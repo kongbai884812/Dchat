@@ -834,11 +834,12 @@
       "#__cam_panel.on{transform:translateY(0)}",
       "#__cam_panel .__cp_title{font-size:12.5px;color:#8b95a7;text-align:center;padding:4px 0 10px}",
       "#__cam_grid{display:flex;gap:10px}",
-      "#__cam_grid button{flex:1;border:0;background:#f5f6f8;border-radius:14px;",
-      "padding:26px 8px;display:flex;align-items:center;justify-content:center;",
-      "font-size:13px;color:#1b1f27}",
+      "#__cam_grid button{flex:1;border:0;background:#f5f6f8;border-radius:16px;",
+      "padding:18px 8px;display:flex;flex-direction:column;align-items:center;gap:10px;",
+      "font-size:14px;color:#1b1f27}",
       "#__cam_grid button:active{background:#e9ecf2}",
-      "#__cam_grid .__cp_ico{font-size:22px;line-height:1}"
+      "#__cam_grid svg{width:26px;height:26px;fill:none;stroke:#1b1f27;stroke-width:1.7;",
+      "stroke-linecap:round;stroke-linejoin:round}"
     ].join("");
     document.head.appendChild(st);
 
@@ -852,9 +853,14 @@
     panel.innerHTML =
       '<div class="__cp_title"></div>' +
       '<div id="__cam_grid">' +
-      '  <button type="button" data-act="camera">拍照</button>' +
-      '  <button type="button" data-act="gallery">相册</button>' +
-      '  <button type="button" data-act="file">文件</button>' +
+      '  <button type="button" data-act="camera">' +
+      '    <svg viewBox="0 0 24 24"><path d="M4 8h3l1.4-2h7.2L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>' +
+      '    <circle cx="12" cy="13" r="3.6"/></svg>拍照</button>' +
+      '  <button type="button" data-act="gallery">' +
+      '    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/>' +
+      '    <circle cx="8.5" cy="10" r="1.4"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>相册</button>' +
+      '  <button type="button" data-act="file">' +
+      '    <svg viewBox="0 0 24 24"><path d="M20 11.5 12 19.5a4.5 4.5 0 0 1-6.4-6.4l8-8a3 3 0 0 1 4.3 4.3l-8 8a1.5 1.5 0 0 1-2.1-2.1l7.3-7.3"/></svg>文件</button>' +
       "</div>";
     document.body.appendChild(panel);
     panelTitle = panel.querySelector(".__cp_title");
