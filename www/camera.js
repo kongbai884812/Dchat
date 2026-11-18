@@ -319,6 +319,10 @@
     "#__pv_composer.voice #__pv_hold{display:flex}",
     "#__pv_composer.voice #__pv_hold.rec{background:rgba(77,107,254,.28)}",
     "#__pv_composer.voice #__pv_hold.cancel{background:rgba(255,82,82,.26);color:#ffd9d9}",
+    "#__pv_more{display:none;gap:8px;padding:0 0 10px}",
+    "#__pv_more.on{display:flex}",
+    "#__pv_more button{flex:1;border:0;border-radius:12px;background:rgba(255,255,255,.12);",
+    "color:#fff;padding:11px 6px;font-size:14px;line-height:1}",
     /* demo 自带的删除按钮只在 :hover 显示，手机上永远看不见；
        这里强制常显，并做成右上角红色圆形 × */
     ".attachment-ed6f47 .remove-ed6f47{opacity:1!important;width:20px!important;height:20px!important;",
@@ -609,6 +613,11 @@
         '<div id="__pv_composer">' +
         '  <textarea id="__pv_text" rows="1" placeholder="发消息或按住说话"></textarea>' +
         '  <div id="__pv_hold">按住 说话</div>' +
+        '  <div id="__pv_more">' +
+        '    <button type="button" data-act="more-camera">拍照</button>' +
+        '    <button type="button" data-act="more-gallery">相册</button>' +
+        '    <button type="button" data-act="more-file">文件</button>' +
+        "  </div>" +
         '  <div class="__pv_tools">' +
         '    <button type="button" class="__pv_pill" data-act="think">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 4.5c2.2 0 3.6 1.3 3.9 3.1 1.4.5 2.3 1.8 2.3 3.3 0 1.6-1 3-2.6 3.4-.4 1.7-1.9 3-3.9 3"/>' +
@@ -805,7 +814,16 @@
         if (target) target.click();
         syncPills();
       } else if (act === "plus") {
-        toast("请退出后从聊天页添加");
+        var more = box.querySelector("#__pv_more");
+        if (more) more.classList.toggle("on");
+      } else if (act === "more-camera" || act === "more-gallery" || act === "more-file") {
+        // 先把当前这张加进草稿，再去加下一张
+        var kind = act === "more-camera" ? "camera" : act === "more-gallery" ? "gallery" : "file";
+        deliver([current.file]).then(function (ok) {
+          hidePreview();
+          if (!ok) { toast("没找到上传入口"); return; }
+          if (window.__dchatPick) window.__dchatPick(kind);
+        });
       } else if (act === "mic") {
         toast("语音输入请在聊天页使用");
       }
