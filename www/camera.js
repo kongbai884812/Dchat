@@ -274,22 +274,41 @@
     "flex-direction:column;font:14px/1.4 system-ui,-apple-system,sans-serif}",
     "#__cam_prev.on{display:flex}",
     "#__cam_prev .__pv_top{display:flex;align-items:center;justify-content:space-between;",
-    "padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;color:#fff}",
+    "padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;color:#fff}",
     "#__cam_prev .__pv_top button{background:none;border:0;color:#fff;padding:8px;line-height:0}",
-    "#__cam_prev .__pv_title{font-size:15px;opacity:.92}",
     "#__cam_prev .__pv_spacer{width:40px;height:40px}",
-    "",
-    "#__cam_prev svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}",
-    "#__cam_prev .__pv_img{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px 12px}",
+    "#__cam_prev svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;",
+    "stroke-linecap:round;stroke-linejoin:round}",
+    "#__cam_prev .__pv_img{flex:1;display:flex;align-items:center;justify-content:center;",
+    "overflow:hidden;padding:2px 12px 8px}",
     "#__cam_prev .__pv_img img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain}",
-    "#__cam_chips{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;white-space:nowrap}",
-    "#__cam_chips button{flex:none;border:0;border-radius:16px;background:rgba(255,255,255,.12);",
-    "color:#fff;padding:9px 14px;font-size:13px}",
-    "#__cam_prev .__pv_bottom{display:flex;gap:12px;padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px))}",
-    "#__cam_prev .__pv_bottom button{flex:1;padding:13px;border-radius:24px;border:0;font-size:15px}",
-    "#__cam_prev .__pv_bottom .__pv_done{background:#4d6bfe;color:#fff}",
-    "#__cam_prev .__pv_bottom .__pv_retry{background:rgba(255,255,255,.14);color:#fff}",
-    "#__cam_prev .__pv_bottom .__pv_crop{background:rgba(255,255,255,.14);color:#fff}",
+    "#__cam_chips{display:flex;gap:8px;padding:8px 12px 10px;overflow-x:auto;white-space:nowrap}",
+    "#__cam_chips button{flex:none;border:0;border-radius:18px;background:#fff;",
+    "color:#14161a;padding:10px 16px;font-size:14px;line-height:1}",
+    "#__cam_chips button:active{background:#e9ecf2}",
+    "#__pv_composer{margin:0 12px calc(12px + env(safe-area-inset-bottom,0px));",
+    "background:#1c1c1e;border-radius:24px;padding:12px 12px 10px}",
+    "#__pv_composer textarea{display:block;width:100%;box-sizing:border-box;border:0;outline:0;",
+    "resize:none;overflow:hidden;background:transparent;color:#fff;",
+    "font:16px/1.4 system-ui,-apple-system,sans-serif;min-height:26px;max-height:96px;",
+    "padding:2px 4px 10px}",
+    "#__pv_composer textarea::placeholder{color:rgba(255,255,255,.42)}",
+    "#__pv_composer .__pv_tools{display:flex;align-items:center;gap:8px}",
+    "#__pv_composer .__pv_pill{flex:none;display:flex;align-items:center;gap:5px;",
+    "border:1px solid rgba(255,255,255,.18);border-radius:16px;background:transparent;",
+    "color:#e8e8ea;padding:7px 12px;font-size:13px;line-height:1}",
+    "#__pv_composer .__pv_pill.on{border-color:rgba(77,107,254,.85);",
+    "background:rgba(77,107,254,.15);color:#c9d3ff}",
+    "#__pv_composer .__pv_pill svg{width:15px;height:15px}",
+    "#__pv_composer .__pv_grow{flex:1}",
+    "#__pv_composer .__pv_rnd{flex:none;width:34px;height:34px;border-radius:50%;",
+    "border:1.5px solid rgba(255,255,255,.65);background:transparent;color:#fff;",
+    "display:flex;align-items:center;justify-content:center;padding:0;line-height:0}",
+    "#__pv_composer .__pv_rnd svg{width:18px;height:18px}",
+    "#__pv_composer .__pv_send{flex:none;width:34px;height:34px;border-radius:50%;border:0;",
+    "background:#4d6bfe;color:#fff;display:flex;align-items:center;justify-content:center;",
+    "padding:0;line-height:0}",
+    "#__pv_composer .__pv_send svg{width:18px;height:18px;stroke-width:2.4}",
     /* demo 自带的删除按钮只在 :hover 显示，手机上永远看不见；
        这里强制常显，并做成右上角红色圆形 × */
     ".attachment-ed6f47 .remove-ed6f47{opacity:1!important;width:20px!important;height:20px!important;",
@@ -568,16 +587,35 @@
       box.id = "__cam_prev";
       box.innerHTML =
         '<div class="__pv_top">' +
-        '  <button type="button" data-act="retry"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-        '  <div class="__pv_title">确认图片</div>' +
+        '  <button type="button" data-act="exit" aria-label="退出">' +
+        '    <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
         '  <span class="__pv_spacer"></span>' +
+        '  <button type="button" data-act="crop" aria-label="裁剪">' +
+        '    <svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M15 4h5v5"/>' +
+        '    <path d="M20 15v5h-5"/><path d="M9 20H4v-5"/></svg></button>' +
         "</div>" +
         '<div class="__pv_img"><img alt="拍摄结果" /></div>' +
         '<div id="__cam_chips"></div>' +
-        '<div class="__pv_bottom">' +
-        '  <button type="button" class="__pv_retry" data-act="retry">重拍</button>' +
-        '  <button type="button" class="__pv_crop" data-act="crop">裁剪</button>' +
-        '  <button type="button" class="__pv_done" data-act="done">完成</button>' +
+        '<div id="__pv_composer">' +
+        '  <textarea id="__pv_text" rows="1" placeholder="发消息或按住说话"></textarea>' +
+        '  <div class="__pv_tools">' +
+        '    <button type="button" class="__pv_pill" data-act="think">' +
+        '      <svg viewBox="0 0 24 24"><path d="M12 4.5c2.2 0 3.6 1.3 3.9 3.1 1.4.5 2.3 1.8 2.3 3.3 0 1.6-1 3-2.6 3.4-.4 1.7-1.9 3-3.9 3"/>' +
+        '      <path d="M12 4.5c-2.6 0-4.4 1.8-4.4 4 0 .5.1.9.2 1.3"/>' +
+        '      <path d="M7.8 9.8c-.3.4-.5.9-.5 1.5 0 1 .5 1.8 1.3 2.3"/>' +
+        '      <path d="M14 10.2l1.6 1.4-1.6 1.4"/></svg>深度思考</button>' +
+        '    <button type="button" class="__pv_pill on" data-act="search">' +
+        '      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/>' +
+        '      <path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.4 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.4-3.6-8.5S9.6 5.9 12 3.5z"/></svg>智能搜索</button>' +
+        '    <span class="__pv_grow"></span>' +
+        '    <button type="button" class="__pv_rnd" data-act="plus" aria-label="添加">' +
+        '      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>' +
+        '    <button type="button" class="__pv_rnd" data-act="mic" aria-label="语音输入">' +
+        '      <svg viewBox="0 0 24 24"><rect x="9.2" y="3" width="5.6" height="11" rx="2.8"/>' +
+        '      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg></button>' +
+        '    <button type="button" class="__pv_send" data-act="send" aria-label="发送">' +
+        '      <svg viewBox="0 0 24 24"><path d="M12 19V6M6 11.5 12 5.5l6 6"/></svg></button>' +
+        "  </div>" +
         "</div>";
       document.body.appendChild(box);
     }
@@ -593,37 +631,89 @@
 
     var chipBox = box.querySelector("#__cam_chips");
     chipBox.innerHTML = "";
-    CHIPS.forEach(function (t) {
+    CHIPS.forEach(function (label) {
       var b = document.createElement("button");
       b.type = "button";
-      b.textContent = t + " →";
+      b.textContent = label + " →";
       b.addEventListener("click", function () {
-        deliver([current.file]).then(function () {
-          if (!fillComposer(t)) toast("图片已加入，请输入问题");
-        });
-        hidePreview();
-        toast("已加入，点发送即可");
+        sendPhoto(current.file, label);
       });
       chipBox.appendChild(b);
     });
+
+    // 输入框随内容长高
+    var textEl = box.querySelector("#__pv_text");
+    textEl.addEventListener("input", function () {
+      textEl.style.height = "auto";
+      textEl.style.height = Math.min(96, textEl.scrollHeight) + "px";
+    });
+
+    // 深度思考 / 智能搜索：直接切换聊天页的同一组开关
+    function syncPills() {
+      var map = [
+        ["think", '#root [aria-label="深度思考"]'],
+        ["search", '#root [aria-label="智能搜索"]']
+      ];
+      map.forEach(function (pair) {
+        var src = document.querySelector(pair[1]);
+        var pill = box.querySelector('[data-act="' + pair[0] + '"]');
+        if (src && pill) {
+          pill.classList.toggle("on", src.getAttribute("aria-pressed") === "true");
+        }
+      });
+    }
+    syncPills();
 
     box.onclick = function (e) {
       var btn = e.target.closest("button");
       if (!btn) return;
       var act = btn.getAttribute("data-act");
-      if (act === "retry") { hidePreview(); openCamera(); }
-      else if (act === "crop") { openCrop(current, img); }
-      else if (act === "done") {
-        deliver([current.file]).then(function (ok) {
-          toast(ok ? "图片已加入" : "没找到上传入口");
-        });
+      if (act === "exit") {
         hidePreview();
+      } else if (act === "crop") {
+        openCrop(current, img);
+      } else if (act === "send") {
+        sendPhoto(current.file, (textEl.value || "").trim());
+      } else if (act === "think" || act === "search") {
+        var target = document.querySelector(
+          act === "think" ? '#root [aria-label="深度思考"]' : '#root [aria-label="智能搜索"]'
+        );
+        if (target) target.click();
+        syncPills();
+      } else if (act === "plus") {
+        toast("请退出后从聊天页添加");
+      } else if (act === "mic") {
+        toast("语音输入请在聊天页使用");
       }
     };
 
     box.classList.add("on");
   }
 
+
+  /** 照片 + 文字一起交给聊天页：上传完成后自动点发送 */
+  function sendPhoto(file, text) {
+    deliver([file]).then(function (ok) {
+      if (!ok) { toast("没找到上传入口，请手动添加"); return; }
+      if (text) fillComposer(text);
+      hidePreview();
+      autoSend();
+    });
+  }
+
+  function autoSend() {
+    var tries = 0;
+    (function tick() {
+      var btn = document.querySelector('#root [aria-label="发送"]');
+      if (btn && btn.getAttribute("aria-disabled") !== "true") {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        btn.click();
+        return;
+      }
+      if (++tries > 80) { toast("图片已加入，点发送即可"); return; }
+      setTimeout(tick, 200);
+    })();
+  }
 
   /* ================= 拍完再框选一块（裁剪） ================= */
   function injectCropCss() {
@@ -796,13 +886,21 @@
 
   function hidePreview() {
     var box = document.getElementById("__cam_prev");
-    if (box) box.classList.remove("on");
+    if (box) {
+      box.classList.remove("on");
+      var ta = box.querySelector("#__pv_text");
+      if (ta) {
+        ta.value = "";
+        ta.style.height = "";
+        ta.blur();
+      }
+    }
     setModal(0);
   }
 
   // 把快捷提问填进 demo 的输入框（React 受控组件要用原生 setter）
   function fillComposer(text) {
-    var ta = document.querySelector("textarea");
+    var ta = document.querySelector("#root textarea") || document.querySelector("textarea");
     if (!ta) return false;
     try {
       var setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
@@ -967,7 +1065,7 @@
       "#__cam_grid button:active{background:#e3e7ee!important}",
       "#__cam_view .__cb_side:active,",
       "#__cam_view .__cv_top button:active,",
-      "#__cam_prev .__pv_bottom button:active{opacity:.75}",
+      "#__cam_prev button:active{opacity:.75}",
       "#__diag_btn:active{opacity:.6!important}",
       // 这些按钮不是 <button>，上面那条选择器够不到，单独补（必须 !important）
       "[aria-label='打开边栏']:active,[aria-label='上传文件']:active,",
