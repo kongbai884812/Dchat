@@ -24,17 +24,6 @@ rm -rf "$OUT" && mkdir -p "$OUT/classes" "$OUT/dex" "$OUT/assets/public"
 echo "== 2/7 拷贝网页资源"
 cp -r "$WWW"/. "$OUT/assets/public/"
 
-if [ "${WITH_DIAG:-1}" = "0" ]; then
-  echo "== 2.5/7 移除诊断入口（发布版）"
-  python3 - "$OUT/assets/public/index.html" <<'PYEOF'
-import re, sys
-p = sys.argv[1]
-s = open(p, encoding="utf-8").read()
-s = re.sub(r"<!-- DIAG-START -->.*?<!-- DIAG-END -->\n?", "", s, flags=re.S)
-open(p, "w", encoding="utf-8").write(s)
-PYEOF
-fi
-
 echo "== 3/7 编译 Java"
 JAVAC_LOG="$OUT/javac.log"
 if ! javac -encoding UTF-8 -source 8 -target 8 \

@@ -30,6 +30,17 @@ SDK=/root/sdk WWW=../www ./build.sh
 | 对齐 | `zipalign` | aarch64 可用 |
 | 签名 | `apksigner`（Java） | 自签，首次安装需允许未知来源 |
 
+`build.sh` 认三个环境变量，都可以不设：
+
+| 变量 | 默认 | 用途 |
+|---|---|---|
+| `SDK` | `/root/sdk` | android.jar / r8.jar 所在目录 |
+| `WWW` | `native-shell/../www` | 网页资源目录 |
+| `KS_PASS` | `local-dev-only` | 签名密码（首次生成 keystore 时用） |
+
+诊断页（顶栏「?」）随包发布，不提供「不带诊断」的开关——之前的 `WITH_DIAG=0` 依赖
+`index.html` 里的 `<!-- DIAG-START -->` 标记，而构建产物会把注释压掉，实际从没生效，已移除。
+
 签名证书 `native-shell/release.jks` 由 `build.sh` 首次运行时生成，之后一直复用，所以能覆盖安装、数据不丢。
 想换密码：`KS_PASS=你的密码 ./build.sh`。
 
