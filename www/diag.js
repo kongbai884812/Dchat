@@ -76,7 +76,7 @@
         // 无论是否在屏幕内都要打：祖先链 + 自身 outerHTML
         var chain = []
         var cur = mic
-        while (cur && cur !== document.body && chain.length < 8) {
+        while (cur && cur !== document.body && chain.length < 20) {
           var st2 = getComputedStyle(cur)
           chain.push(
             cur.tagName +
@@ -95,20 +95,21 @@
           for (var i = 0; i < list.length; i++) {
             var rule = list[i]
             try {
-              if (rule.cssRules) {
+              if (rule.selectorText && rule.style && rule.style.display && mic.matches(rule.selectorText)) {
+                hits.push(
+                  prefix +
+                    rule.selectorText +
+                    ' => ' +
+                    rule.style.display +
+                    (rule.style.getPropertyPriority('display') ? '!' : '')
+                )
+              }
+            } catch (e) {}
+            try {
+              if (rule.cssRules && rule.cssRules.length) {
                 var cond = rule.conditionText || (rule.media && rule.media.mediaText) || ''
                 scan(rule.cssRules, prefix + cond + ' >> ')
-                continue
               }
-              if (!rule.selectorText || !rule.style || !rule.style.display) continue
-              if (!mic.matches(rule.selectorText)) continue
-              hits.push(
-                prefix +
-                  rule.selectorText +
-                  ' => ' +
-                  rule.style.display +
-                  (rule.style.getPropertyPriority('display') ? '!' : '')
-              )
             } catch (e) {}
           }
         })(document.styleSheets, '')
@@ -119,6 +120,60 @@
             sheetCount++
           } catch (e) {}
         }
+        // 版式：按钮相对输入卡片的位置
+        var tw = mic.parentElement
+        var card = tw && tw.parentElement
+        var row = document.querySelector('[class*="functionRow"]')
+        out.push(
+          'layout mic=' +
+            rect(mic.getBoundingClientRect()) +
+            ' tw=' +
+            (tw ? rect(tw.getBoundingClientRect()) : '-') +
+            ' card=' +
+            (card ? rect(card.getBoundingClientRect()) : '-') +
+            ' row=' +
+            (row ? rect(row.getBoundingClientRect()) : '-')
+        )
+        if (card) {
+          var cs2 = getComputedStyle(card)
+          out.push(
+            'card-style bg=' + cs2.backgroundColor + ' radius=' + cs2.borderRadius + ' pos=' + cs2.position
+          )
+        }
+        // 规则原文：确认加载到的 CSS 和包里的是同一份
+        var ruleTexts = []
+                ;(function collect(list) {
+          for (var ci = 0; ci < list.length; ci++) {
+            var r0 = list[ci]
+            try {
+              if (r0.cssText && r0.cssText.indexOf('inBoxButton') >= 0 && ruleTexts.length < 2) {
+                ruleTexts.push(r0.cssText.slice(0, 200))
+              }
+            } catch (e) {}
+            try {
+              if (r0.cssRules && r0.cssRules.length) collect(r0.cssRules)
+            } catch (e) {}
+          }
+        })(document.styleSheets)
+        var hrefs = []
+        for (var hi = 0; hi < document.styleSheets.length; hi++) {
+          try {
+            hrefs.push((document.styleSheets[hi].href || 'inline').split('/').pop())
+          } catch (e) {}
+        }
+        out.push('hrefs=' + hrefs.join(','))
+        out.push('rule=' + (ruleTexts.length ? ruleTexts.join(' ## ') : 'none'))
+        // 克隆到 body 里看同一条规则在别处是否生效
+        try {
+          var clone = mic.cloneNode(true)
+          clone.removeAttribute('style')
+          document.body.appendChild(clone)
+          out.push('clone=' + getComputedStyle(clone).display + ' rect=' + rect(clone.getBoundingClientRect()))
+          clone.parentNode.removeChild(clone)
+        } catch (e) {}
+        try {
+          out.push('visible=' + (mic.checkVisibility ? mic.checkVisibility() : 'n/a'))
+        } catch (e) {}
         out.push('sheets=' + document.styleSheets.length + '/' + sheetCount)
         out.push('css=' + (hits.length ? hits.join(' || ') : 'no-match'))
         out.push(

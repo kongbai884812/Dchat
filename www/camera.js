@@ -1087,13 +1087,5 @@
   // 否则只走「相册/文件」加图时永远到不了 buildCam()，红叉就不会出现
   injectCamCss();
 
-  (function () {
-    var st = document.createElement("style");
-    st.textContent =
-      "[aria-label='语音输入']{display:none!important}" +
-      "[aria-label='朗读'],[aria-label='停止朗读']{display:none!important}";
-    document.head.appendChild(st);
-  })();
-
   console.log("[camera.js] ready");
 })();
