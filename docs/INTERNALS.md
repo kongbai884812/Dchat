@@ -153,7 +153,7 @@ demo 本身能接受附件缺失（保留元数据、不参与后续请求），
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| 整页白 + diag 说 `import()` 被拒 | `file://` 加载 | 换 Capacitor / 本地 http |
+| 整页白 + diag 说 `import()` 被拒 | `file://` 加载 | 必须走 `https://localhost` 或本地 http |
 | 白屏但有布局 | 首屏请求失败 | 看 diag 的跨域/网络两行 |
 | 能用但发消息报 `Failed to fetch` | key 没填 / 被限流 | 设置里填 key |
 | `ERR_CLEARTEXT_NOT_PERMITTED` | 用了 `http://` | 改 https |

@@ -24,6 +24,7 @@
 | appId | `app.dchat` |
 | minSdk / targetSdk | 24 / 36 |
 | 资源加载 | `https://localhost` 映射到应用内资源，**不是 file://** |
+| 构建 | `native-shell/build.sh`：aapt + javac + d8 + zipalign + apksigner，无需 Gradle |
 | 当前版本 | 1.28（versionCode 29） |
 | APK 体积 | 约 1.9MB |
 
@@ -65,8 +66,9 @@ APK 由本地 keystore 自签名，未经应用商店或厂商实名认证。安
 
 ## 自己构建
 
-- 电脑上走 Gradle（含签名配置）→ [docs/BUILD.md](docs/BUILD.md)
-- **手机上直接出包**，不需要电脑和 Gradle → [docs/BUILD.md](docs/BUILD.md#在手机上直接出包)
+**一条路径**：`native-shell/build.sh`，aapt + javac + d8，不需要电脑和 Gradle，手机上就能出包 → [docs/BUILD.md](docs/BUILD.md)
+
+想用 Android Studio 的话按 `npx cap add android` 现场生成原生工程，再把 `MainActivity.java` 覆盖进去，步骤见同一篇文档。
 
 ## 代码透明度
 
@@ -110,8 +112,6 @@ chat-demo-app/
 │   ├── icon-source.png        图标源文件（黑色 D）
 │   ├── AndroidManifest.xml
 │   └── build.sh
-├── android/                   ← 备选路径：Capacitor 原生工程（走 Gradle）
-│   └── keystore.properties.example   签名配置模板（填好另存为 keystore.properties）
 ├── docs/
 │   ├── BUILD.md               构建与签名
 │   └── INTERNALS.md           实现细节与排障
@@ -119,7 +119,7 @@ chat-demo-app/
 ├── third_party/chat-demo/     DeepSeek chat-demo 的 MIT 许可证
 ├── dist/                      构建产物（.gitignore 已排除）
 ├── LICENSE / NOTICE           本项目许可证 / 非官方声明与第三方组件
-└── capacitor.config.json
+└── capacitor.config.json     仅在用 npx cap add android 生成原生工程时使用
 ```
 
 ## 文档

@@ -12,7 +12,7 @@ bash native-shell/build.sh          # → native-shell/dist/dchat-v1.apk
 
 改过功能就同时升版本：`../chat-demo-src/package.json` 的 `version`、`native-shell/AndroidManifest.xml` 的 `versionCode` / `versionName`（同一 keystore，可覆盖安装上一版）。
 
-`android/` 是备选路径（Capacitor + Gradle），它的 `MainActivity.java`、`versionCode` / `versionName`、权限声明都与 `native-shell/` 保持一致，改主路径时一起改。
+构建路径只有 `native-shell/` 一条（原来的 Capacitor/Gradle 工程已从仓库移除，需要时用 `npx cap add android` 现场生成，见 `docs/BUILD.md`）。版本号只需改两处：`../chat-demo-src/package.json` 和 `native-shell/AndroidManifest.xml`。
 
 ## 产物投放
 
