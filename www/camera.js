@@ -685,6 +685,7 @@
       } else {
         holdEl.classList.remove("rec");
         holdEl.textContent = "按住 说话";
+        if (window.__voiceRelease) window.__voiceRelease();
       }
       syncMain();
     }
@@ -727,7 +728,10 @@
     holdEl.addEventListener("pointermove", function (e) {
       if (!hold.down) return;
       e.preventDefault();
-      hold.cancel = hold.y - e.clientY > CANCEL_AT;
+      // 某些 WebView 会丢出 clientY=0 的伪移动，会把每次按住都判成取消
+      if (!e.clientY) return;
+      var up = hold.y - e.clientY;
+      hold.cancel = up > CANCEL_AT;
       paintHold();
     });
 
@@ -1006,6 +1010,8 @@
 
   function hidePreview() {
     if (window.__voiceSetSink) window.__voiceSetSink(null);
+    if (window.__voiceCancel) window.__voiceCancel();
+    if (window.__voiceRelease) window.__voiceRelease();
     var box = document.getElementById("__cam_prev");
     if (box) {
       box.classList.remove("on");
