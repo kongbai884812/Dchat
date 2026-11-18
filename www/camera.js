@@ -62,7 +62,6 @@
       imageAddedTapSend: '图片已加入，点发送即可',
       noUploadEntry: '没找到上传入口，请手动点「上传文件」',
       noUploadEntryShort: '没找到上传入口，请手动添加',
-      voiceInChat: '语音输入请在聊天页使用',
       torchUnsupported: '这台设备不支持闪光灯常亮',
       torchFailed: '闪光灯切换失败',
       switchCameraFailed: '切换摄像头失败',
@@ -113,7 +112,6 @@
       imageAddedTapSend: 'Image added — tap send',
       noUploadEntry: 'Upload entry not found — tap \u201cUpload files\u201d manually',
       noUploadEntryShort: 'Upload entry not found — add it manually',
-      voiceInChat: 'Use voice input on the chat page',
       torchUnsupported: "This device can't keep the torch on",
       torchFailed: 'Could not toggle the torch',
       switchCameraFailed: 'Could not switch camera',
@@ -481,10 +479,10 @@
     'font:16px/1.4 system-ui,-apple-system,sans-serif;min-height:26px;max-height:96px;',
     'padding:2px 4px 10px}',
     '#__pv_composer textarea::placeholder{color:rgba(255,255,255,.42)}',
-    '#__pv_composer .__pv_tools{display:flex;align-items:center;gap:8px}',
+    '#__pv_composer .__pv_tools{display:flex;align-items:center;gap:6px}',
     '#__pv_composer .__pv_pill{flex:none;display:flex;align-items:center;gap:5px;',
-    'border:1px solid rgba(255,255,255,.18);border-radius:16px;background:transparent;',
-    'color:#e8e8ea;padding:7px 12px;font-size:13px;line-height:1}',
+    'border:1px solid rgba(255,255,255,.18);border-radius:15px;background:transparent;',
+    'color:#e8e8ea;padding:6px 9px;font-size:12px;line-height:1;white-space:nowrap}',
     '#__pv_composer .__pv_pill.on{border-color:rgba(77,107,254,.85);',
     'background:rgba(77,107,254,.15);color:#c9d3ff}',
     '#__pv_composer .__pv_pill svg{width:15px;height:15px}',
@@ -493,13 +491,11 @@
     'border:1.5px solid rgba(255,255,255,.65);background:transparent;color:#fff;',
     'display:flex;align-items:center;justify-content:center;padding:0;line-height:0}',
     '#__pv_composer .__pv_rnd svg{width:18px;height:18px}',
-    '#__pv_composer .__pv_main{flex:none;width:34px;height:34px;border-radius:50%;',
-    'border:1.5px solid rgba(255,255,255,.65);background:transparent;color:#fff;',
-    'display:flex;align-items:center;justify-content:center;padding:0;line-height:0;',
-    'transition:background .18s,border-color .18s}',
-    '#__pv_composer .__pv_main.send{border-color:#4d6bfe;background:#4d6bfe}',
-    '#__pv_composer .__pv_main svg{width:18px;height:18px}',
-    '#__pv_composer .__pv_main.send svg{stroke-width:2.4}',
+    '#__pv_composer .__pv_voice{width:30px;height:30px}',
+    '#__pv_composer .__pv_send{width:30px;height:30px;border-color:#4d6bfe;',
+    'background:#4d6bfe;transition:background .18s,border-color .18s}',
+    '#__pv_composer .__pv_voice svg,#__pv_composer .__pv_send svg{width:16px;height:16px}',
+    '#__pv_composer .__pv_send svg{stroke-width:2.4}',
     '#__pv_hold{display:none;height:44px;margin:4px 0 10px;border-radius:12px;',
     'background:rgba(255,255,255,.1);color:#fff;align-items:center;justify-content:center;',
     'font-size:15px;user-select:none;-webkit-user-select:none;touch-action:none}',
@@ -865,8 +861,8 @@
         '    <span class="__pv_grow"></span>' +
         '    <button type="button" class="__pv_rnd" data-act="plus" aria-label="' + t('add') + '">' +
         '      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>' +
-        '    <button type="button" class="__pv_main" data-act="main" aria-label="' + t('send') + '">' +
-        '      <svg viewBox="0 0 24 24"><path d="M12 19V6M6 11.5 12 5.5l6 6"/></svg></button>' +
+        '    <button type="button" class="__pv_rnd __pv_voice" data-act="voice" aria-label="' + t('voice') + '"></button>' +
+        '    <button type="button" class="__pv_rnd __pv_send" data-act="send" aria-label="' + t('send') + '"></button>' +
         '  </div>' +
         '</div>'
       document.body.appendChild(box)
@@ -895,7 +891,8 @@
     })
 
     var composer = box.querySelector('#__pv_composer')
-    var mainBtn = box.querySelector('[data-act="main"]')
+    var voiceBtn = box.querySelector('[data-act="voice"]')
+    var sendBtn = box.querySelector('[data-act="send"]')
     var holdEl = box.querySelector('#__pv_hold')
     var textEl = box.querySelector('#__pv_text')
 
@@ -907,13 +904,14 @@
       '<svg viewBox="0 0 24 24"><rect x="2.6" y="6" width="18.8" height="12" rx="2.4"/>' +
       '<path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>'
 
-    /** 和主页面同一个规则：有字→发送，没字→麦克风，语音模式→键盘 */
+    /** 预览页把「发送」拆出来了：左边麦克风/键盘切换，右边始终是发送箭头。
+     *  这样拍完照不写字也能直接发（主页面仍是三合一，有附件时它就是发送）。 */
     function syncMain() {
       var voice = composer.classList.contains('voice')
-      var hasText = !!textEl.value.trim()
-      mainBtn.classList.toggle('send', !voice && hasText)
-      mainBtn.innerHTML = voice ? ICON_KB : hasText ? ICON_SEND : ICON_MIC
-      mainBtn.setAttribute('aria-label', voice ? t('keyboard') : hasText ? t('send') : t('voice'))
+      voiceBtn.innerHTML = voice ? ICON_KB : ICON_MIC
+      voiceBtn.setAttribute('aria-label', voice ? t('keyboard') : t('voice'))
+      sendBtn.innerHTML = ICON_SEND
+      sendBtn.setAttribute('aria-label', t('send'))
     }
 
     function setVoiceMode(on) {
@@ -1033,17 +1031,16 @@
         hidePreview()
       } else if (act === 'crop') {
         openCrop(current, img)
-      } else if (act === 'main') {
-        if (composer.classList.contains('voice')) {
-          setVoiceMode(false)
+      } else if (act === 'voice') {
+        var toVoice = !composer.classList.contains('voice')
+        setVoiceMode(toVoice)
+        if (!toVoice) {
           try {
             textEl.focus()
           } catch (err) {}
-        } else if (textEl.value.trim()) {
-          sendPhoto(current.file, textEl.value.trim())
-        } else {
-          setVoiceMode(true)
         }
+      } else if (act === 'send') {
+        sendPhoto(current.file, textEl.value.trim())
       } else if (act === 'think' || act === 'search') {
         var target = byLabel(act === 'think' ? LABELS.think : LABELS.search)
         if (target) target.click()
@@ -1062,8 +1059,6 @@
           }
           if (window.__dchatPick) window.__dchatPick(kind)
         })
-      } else if (act === 'mic') {
-        toast(t('voiceInChat'))
       }
     }
 
