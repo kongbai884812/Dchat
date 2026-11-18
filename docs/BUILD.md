@@ -4,7 +4,7 @@
 
 ```bash
 cd chat-demo-app
-npm run serve        # http://127.0.0.1:8080
+npm run serve        # http://127.0.0.1:8080，只是把 www/ 当静态站点跑
 ```
 
 浏览器开 `http://127.0.0.1:8080/`，能用就说明页面本身没问题，剩下只是套壳。

@@ -97,8 +97,9 @@ sha256sum www/camera.js
 ```
 chat-demo-app/
 ├── www/                       ← 前端资源（打包进 APK 的就是这里）
-│   ├── index.html             demo 入口（改了 title，注入了诊断按钮）
+│   ├── index.html             demo 入口（改了 title，挂上 camera.js / diag.js）
 │   ├── camera.js              相机 / 相册 / 文件选择的取景器与面板
+│   ├── diag.js                诊断浮层（顶栏问号 → iframe 打开 diag.html）
 │   ├── diag.html              诊断页（版本 / 网络 / 存储 / 历史导入）
 │   ├── zipcheck.html          ZIP 结构检查页
 │   ├── LICENSE                DeepSeek chat-demo 的 MIT 原文
@@ -114,7 +115,7 @@ chat-demo-app/
 ├── docs/
 │   ├── BUILD.md               构建与签名
 │   └── INTERNALS.md           实现细节与排障
-├── server/proxy.mjs           本地静态服务（顺带留了个接口代理，实际不用）
+├── server/proxy.mjs           本地静态预览服务（零依赖，只服务 www/）
 ├── third_party/chat-demo/     DeepSeek chat-demo 的 MIT 许可证
 ├── dist/                      构建产物（.gitignore 已排除）
 ├── LICENSE / NOTICE           本项目许可证 / 非官方声明与第三方组件

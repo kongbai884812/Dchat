@@ -22,7 +22,6 @@ native-shell/release.jks
 *.idsig
 .env
 .env.*
-!.env.example
 
 # Gradle 正式签名（模板 keystore.properties.example 才会提交）
 android/keystore.properties

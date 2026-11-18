@@ -8,7 +8,7 @@ demo 自带完整附件链路：`input[type=file] multiple` → `POST {base}/ant
 
 ### 入口
 
-左下悬浮按钮 → 底部三格：**📷 拍照 / 🖼 相册 / 📎 文件**（对齐 DeepSeek App 的面板）。
+输入框右下角的「+」→ 面板**在卡片内部展开**（不是带遮罩的浮层），三格：**📷 拍照 / 🖼 相册 / 📎 文件**；展开时加号旋转 45° 变成叉，卡片向上撑高把聊天内容顶上去。面板由 React 渲染（`ChatInput`），`camera.js` 只提供三个隐藏的 `input` 和相机，通过 `window.__dchatPick('camera'|'gallery'|'file')` 被调用。
 
 ### 拍照：App 内自绘取景器
 
@@ -17,7 +17,7 @@ demo 自带完整附件链路：`input[type=file] multiple` → `POST {base}/ant
 - 取景器内**双指捏合变焦**（1–4×，软件实现：CSS 缩放画面 + 快门时中心裁切，保证拍到的就是看到的）
 - 底部 ⚡ 闪光灯（`torch` 约束）、白色快门、🖼 直达相册
 - 快门 → canvas 抓帧（长边 1600 / JPEG 0.92）→ **预览页**
-- 预览页：大图 + 快捷 chips「这是什么 / 分析一下 / 怎么办 / 解释一下」+「重拍 / 完成」。点 chip 会把图入列、并把文案填进输入框（用原生 setter + `input` 事件，兼容 React 受控组件）
+- 预览页：左上「✕」退出、右上「⛶」裁剪；中间大图；底部一排快捷 chips「这是什么 → / 分析一下 → / 怎么办 → / 解释一下 →」；再往下是**复用主界面输入框**（三合一按钮：无文字麦克风、有文字发送、语音模式键盘 + 按住说话，`+` 继续添加）。点 chip 或点发送 = 图入列 + 文案填进去（原生 setter + `input` 事件，兼容 React 受控组件）+ 自动点发送
 
 **失败一律回退系统相机**：`getUserMedia` 不可用或抛错（老 ROM 黑屏、权限被拒）→ 自动改走 `<input capture="environment">`，不会卡住。
 
@@ -53,6 +53,10 @@ demo 自带删除按钮，但样式是给桌面写的：
 > 这段样式必须**在脚本启动时注入**（`injectCamCss()`）。它原本只写在 `buildCam()`
 > 和 `showPreview()` 里，而「添加 → 相册」这条路径不会调用它们，导致规则从未生效。
 
+`ed6f47` 是 CSS Modules 对 `ChatInput.module.css` 的哈希，由**文件路径**决定（不是内容），
+所以重新构建前端不会变；但如果换了构建工具或改了文件路径，这里写死的类名会静默失效
+（表现：缩略图上的删除叉又不见了），改完前端记得核对 `www/static/css/main.*.css` 里的实际类名。
+
 ### 投喂给 demo
 
 找到 demo 自己的上传 `input`，用 `DataTransfer` 赋 `input.files` 后派发 `change`，React 的 `onChange` 照常跑；找不到 input 时退回合成 `paste`（textarea）/ `drop`（document）事件，并最多等 3 秒等它渲染。
@@ -79,11 +83,15 @@ demo 自带删除按钮，但样式是给桌面写的：
 
 改的是上线数字和提示文案里的 `{count}` 占位符，两处必须一起改，否则弹出的提示会说错数字。
 
-### Manifest 需要两项
+### Manifest 需要三项权限 + 一条 queries
 
 ```xml
-<!-- App 内相机走 getUserMedia，必须声明（Capacitor 会转成运行时权限框） -->
+<!-- App 内相机走 getUserMedia，必须声明（WebView 的 VIDEO_CAPTURE 请求会转成运行时权限框） -->
 <uses-permission android:name="android.permission.CAMERA" />
+<!-- 按住说话录音，WebView 的 AUDIO_CAPTURE 请求同样转成运行时权限框 -->
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<!-- WebRTC 音频路由；缺了部分机型 getUserMedia 直接 NotReadableError -->
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
 <!-- 系统相机兜底路径需要，否则 Android 11+ resolveActivity() 返回 null -->
 <queries>
@@ -91,7 +99,7 @@ demo 自带删除按钮，但样式是给桌面写的：
 </queries>
 ```
 
-权限由 `BridgeWebChromeClient.onPermissionRequest()` 处理：检测到 `VIDEO_CAPTURE` 就申请 `CAMERA`，授权后 `request.grant()`，拒绝则 `deny()` —— 拒绝后自绘相机会失败并自动回退系统相机。
+权限由 `MainActivity` 里的 `WebChromeClient.onPermissionRequest()` 处理：识别 `VIDEO_CAPTURE` / `AUDIO_CAPTURE`，缺哪个就 `requestPermissions()` 申请，全部同意才 `request.grant()`，否则 `deny()` —— 拒绝后自绘相机自动回退系统相机，录音则提示无权限。
 
 ## 历史导入：会跳过图片
 
@@ -128,7 +136,7 @@ demo 本身能接受附件缺失（保留元数据、不参与后续请求），
 - `getUserMedia` 带 `echoCancellation` / `noiseSuppression` 会直接抛 `NotReadableError: Could not start audio source`。现在按「带处理 → 默认 → 全关处理」三档退让，并记住成功的那一档（`preferredVariant`），后续直接命中。
 - 首次打开麦克风要 1~2 秒，按住一两秒根本等不到。进入语音模式时先 `primeMicrophone()` 把流打开并**留着**（`warmStream`），按下时直接复用，退出语音模式才释放。
 
-Manifest 需要 `RECORD_AUDIO`（WebView 的 `AUDIO_CAPTURE` 请求转系统权限框）和 `MODIFY_AUDIO_SETTINGS`（WebRTC 音频路由，缺了部分机型直接给不了音频源）。
+权限声明见上面「Manifest 需要三项权限 + 一条 queries」。
 
 ## 附件面板与拍照预览页
 
