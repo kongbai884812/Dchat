@@ -21,9 +21,9 @@ cd ../native-shell && bash build.sh
 
 | 文件 | 改动 |
 |---|---|
-| `src/components/chat/ChatInput.tsx` | 输入区重做：附件「+」在卡片内展开、加号旋转成叉、右下角三合一按钮 |
-| `src/components/chat/HoldToTalk.tsx`（新增） | 「按住 说话」按钮：按下收音、松手发送、上滑取消 |
-| `src/hooks/usePushToTalk.ts`（新增） | 录音 → 上传 `/v1/tools/asr` → 回填/直接发送的完整状态机 |
+| `src/components/chatInput/ChatInput.tsx` | 输入区重做：附件「+」在卡片内展开、加号旋转成叉、右下角三合一按钮 |
+| `src/components/chatInput/HoldToTalk.tsx`（新增） | 「按住 说话」按钮：按下收音、松手发送、上滑取消 |
+| `src/components/chatInput/usePushToTalk.ts`（新增） | 录音 → 上传 `/v1/tools/asr` → 回填/直接发送的完整状态机 |
 | `src/services/speech/recorder.ts`、`trace.ts` | 麦克风三档降级、预热、诊断日志 |
 | `src/services/settings.ts` | API Key 走 Android Keystore 加密（`DchatSecure` 桥），余额查询、语言读写 |
 | `src/services/balance.ts`、`components/settings/BalancePanel.tsx`（新增） | 余额面板 |
