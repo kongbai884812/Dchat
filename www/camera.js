@@ -815,79 +815,24 @@
     }
   }
 
-  /* ================= 底部面板：拍照 / 相册 / 文件 ================= */
-  var panel = null, mask = null, panelTitle = null;
-
-  function buildPanel() {
-    if (panel) return;
-    var st = document.createElement("style");
-    st.textContent = [
-      "#__cam_mask2{position:fixed;inset:0;z-index:2147483644;background:rgba(0,0,0,.34);",
-      "opacity:0;pointer-events:none;transition:opacity .18s}",
-      "#__cam_mask2.on{opacity:1;pointer-events:auto}",
-      "#__cam_panel{position:fixed;left:0;right:0;bottom:0;z-index:2147483645;background:#fff;",
-      "border-radius:18px 18px 0 0;padding:10px 12px;",
-      "padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));",
-      "box-shadow:0 -6px 24px rgba(0,0,0,.18);transform:translateY(110%);",
-      "transition:transform .22s cubic-bezier(.2,.8,.2,1);",
-      "font:14px/1.4 system-ui,-apple-system,sans-serif}",
-      "#__cam_panel.on{transform:translateY(0)}",
-      "#__cam_panel .__cp_title{font-size:12.5px;color:#8b95a7;text-align:center;padding:4px 0 10px}",
-      "#__cam_grid{display:flex;gap:10px}",
-      "#__cam_grid button{flex:1;border:0;background:#f5f6f8;border-radius:16px;",
-      "padding:18px 8px;display:flex;flex-direction:column;align-items:center;gap:10px;",
-      "font-size:14px;color:#1b1f27}",
-      "#__cam_grid button:active{background:#e9ecf2}",
-      "#__cam_grid svg{width:26px;height:26px;fill:none;stroke:#1b1f27;stroke-width:1.7;",
-      "stroke-linecap:round;stroke-linejoin:round}"
-    ].join("");
-    document.head.appendChild(st);
-
-    mask = document.createElement("div");
-    mask.id = "__cam_mask2";
-    mask.addEventListener("click", closePanel);
-    document.body.appendChild(mask);
-
-    panel = document.createElement("div");
-    panel.id = "__cam_panel";
-    panel.innerHTML =
-      '<div class="__cp_title"></div>' +
-      '<div id="__cam_grid">' +
-      '  <button type="button" data-act="camera">' +
-      '    <svg viewBox="0 0 24 24"><path d="M4 8h3l1.4-2h7.2L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>' +
-      '    <circle cx="12" cy="13" r="3.6"/></svg>拍照</button>' +
-      '  <button type="button" data-act="gallery">' +
-      '    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/>' +
-      '    <circle cx="8.5" cy="10" r="1.4"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>相册</button>' +
-      '  <button type="button" data-act="file">' +
-      '    <svg viewBox="0 0 24 24"><path d="M20 11.5 12 19.5a4.5 4.5 0 0 1-6.4-6.4l8-8a3 3 0 0 1 4.3 4.3l-8 8a1.5 1.5 0 0 1-2.1-2.1l7.3-7.3"/></svg>文件</button>' +
-      "</div>";
-    document.body.appendChild(panel);
-    panelTitle = panel.querySelector(".__cp_title");
-
-    panel.addEventListener("click", function (e) {
-      var btn = e.target.closest("button");
-      if (!btn) return;
-      var act = btn.getAttribute("data-act");
-      closePanel();
-      if (act === "camera") openCamera();
-      else if (act === "gallery") galleryInput.click();
-      else if (act === "file") fileInput.click();
-    });
-  }
-
+  /* ================= 面板：交给 React 渲染 =================
+   * 面板在输入框卡片内部展开、把整个输入区连同聊天内容一起顶上去，
+   * 不再是带遮罩的固定浮层。这里只负责提供三个输入源和相机。
+   */
   function openPanel(justAdded) {
-    buildPanel();
-    panelTitle.textContent = justAdded ? "已加入 " + justAdded + " 张，继续添加？" : "添加图片或文件";
-    mask.classList.add("on");
-    panel.classList.add("on");
+    if (window.__openAttachPanel) window.__openAttachPanel(justAdded || 0);
   }
 
   function closePanel() {
-    if (!panel) return;
-    mask.classList.remove("on");
-    panel.classList.remove("on");
+    if (window.__closeAttachPanel) window.__closeAttachPanel();
   }
+
+  // React 面板上的三个按钮点这里
+  window.__dchatPick = function (act) {
+    if (act === "camera") openCamera();
+    else if (act === "gallery") galleryInput.click();
+    else if (act === "file") fileInput.click();
+  };
 
   /* ================= 接管页面按钮 ================= */
   function closest(el, sel) {
@@ -911,8 +856,7 @@
     var overlayOpen =
       (cam.overlay && cam.overlay.classList.contains("on")) ||
       (document.getElementById("__cam_prev") &&
-        document.getElementById("__cam_prev").classList.contains("on")) ||
-      (panel && panel.classList.contains("on"));
+        document.getElementById("__cam_prev").classList.contains("on"));
 
     if (trusted && !overlayOpen && e.clientX < 240 && e.clientY < 260) {
       var menu = document.querySelector('[aria-label="打开边栏"]');
@@ -927,15 +871,6 @@
           return;
         }
       }
-    }
-
-    // 输入框里的附件（回形针）按钮 → 相机
-    var attach = closest(t, '[aria-label="上传文件"]') || closest(t, '[aria-label="Upload files"]');
-    if (attach) {
-      e.preventDefault();
-      e.stopPropagation();
-      openPanel(0);          // 拍照 / 相册 / 文件
-      return;
     }
 
     // 注意：导入历史的「上传」不再由 JS 拦截。
@@ -1070,7 +1005,7 @@
       "@keyframes __prev_in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}",
       "#__cam_prev.on{animation:__prev_in .16s ease-out}",
       // 底部面板：改弹簧曲线，更有弹出手感
-      "#__cam_panel{transition:transform .26s cubic-bezier(.18,1.1,.32,1)!important}"
+      ""
     ].join("");
     document.head.appendChild(st);
   })();
