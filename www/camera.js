@@ -318,6 +318,7 @@
     "#__pv_composer.voice #__pv_text{display:none}",
     "#__pv_composer.voice #__pv_hold{display:flex}",
     "#__pv_composer.voice #__pv_hold.rec{background:rgba(77,107,254,.28)}",
+    "#__pv_composer.voice #__pv_hold.cancel{background:rgba(255,82,82,.26);color:#ffd9d9}",
     /* demo 自带的删除按钮只在 :hover 显示，手机上永远看不见；
        这里强制常显，并做成右上角红色圆形 × */
     ".attachment-ed6f47 .remove-ed6f47{opacity:1!important;width:20px!important;height:20px!important;",
@@ -677,6 +678,9 @@
       composer.classList.toggle("voice", on);
       if (on) {
         textEl.blur();
+        if (window.__voiceCancel) window.__voiceCancel();
+        if (window.__voiceWarm) window.__voiceWarm();
+        holdEl.classList.remove("rec", "cancel");
         holdEl.textContent = "按住 说话";
       } else {
         holdEl.classList.remove("rec");
@@ -693,28 +697,56 @@
     });
 
     // 按住说话：直接复用主页面的录音与识别
-    var hold = { down: false, y: 0 };
+    var CANCEL_AT = 56;
+    var hold = { down: false, y: 0, cancel: false };
+
+    function paintHold() {
+      holdEl.classList.toggle("rec", hold.down);
+      holdEl.classList.toggle("cancel", hold.down && hold.cancel);
+      holdEl.textContent = !hold.down
+        ? "按住 说话"
+        : hold.cancel
+          ? "松开手指，取消发送"
+          : "松开发送，上滑取消";
+    }
+
     holdEl.addEventListener("pointerdown", function (e) {
+      if (hold.down) return;
       e.preventDefault();
       hold.down = true;
       hold.y = e.clientY;
-      holdEl.classList.add("rec");
-      holdEl.textContent = "松开发送，上滑取消";
+      hold.cancel = false;
       if (holdEl.setPointerCapture) {
         try { holdEl.setPointerCapture(e.pointerId); } catch (err) {}
       }
+      holdEl.textContent = "松开发送，上滑取消";
+      holdEl.classList.add("rec");
       if (window.__voiceStart) window.__voiceStart();
     });
-    function endHold(e) {
+
+    holdEl.addEventListener("pointermove", function (e) {
+      if (!hold.down) return;
+      e.preventDefault();
+      hold.cancel = hold.y - e.clientY > CANCEL_AT;
+      paintHold();
+    });
+
+    function endHold() {
       if (!hold.down) return;
       hold.down = false;
-      holdEl.classList.remove("rec");
-      holdEl.textContent = "识别中…";
-      var canceled = hold.y - (e && e.clientY ? e.clientY : hold.y) > 56;
+      var canceled = hold.cancel;
+      hold.cancel = false;
+      holdEl.classList.remove("rec", "cancel");
+      holdEl.textContent = canceled ? "已取消" : "识别中…";
       if (window.__voiceFinish) window.__voiceFinish(canceled);
+      if (canceled) {
+        setTimeout(function () {
+          if (!hold.down) paintHold();
+        }, 700);
+      }
     }
     holdEl.addEventListener("pointerup", endHold);
-    holdEl.addEventListener("pointercancel", function (e) { endHold(e); });
+    holdEl.addEventListener("pointercancel", endHold);
 
     // 识别结果回到预览页输入框
     if (window.__voiceSetSink) {
