@@ -142,7 +142,7 @@ demo 本身能接受附件缺失（保留元数据、不参与后续请求），
 ## 界面语言：别把中文写死
 
 `camera.js` 是独立脚本，读不到 React 的 i18n 上下文，所以它自己维护一份
-`I18N`（49 个键，中英各一套）并现读 `localStorage['chat-demo:locale']`；
+`I18N`（48 个键，中英各一套）并现读 `localStorage['chat-demo:locale']`；
 没有这个键时**跟随系统语言**（和 `services/settings.ts` 的 `initialLocale()` 同一规则）：
 
 - `t('hold')` 取文案，切到英文后立刻生效，不用重启；
@@ -167,9 +167,11 @@ demo 的按钮没有稳定的 id，能被外部脚本稳拿的标识就是 `aria
 
 ## 附件面板与拍照预览页
 
-- 输入框右下角三合一按钮：无文字=麦克风、有文字=发送、语音模式=键盘；`+` 在卡片内展开面板（拍照/相册/文件），展开时加号旋转 45° 变成叉，卡片向上撑高把聊天内容顶上去，不再用全屏遮罩。
+- 主页面输入框右下角是三合一按钮：无文字=麦克风、有文字=发送、语音模式=键盘（预览页已拆成「+ / 语音 / 发送」三键并排，见上一节）；`+` 在卡片内展开面板（拍照/相册/文件），展开时加号旋转 45° 变成叉，卡片向上撑高把聊天内容顶上去，不再用全屏遮罩。
 - `www/camera.js` 不再自己画面板，只提供三个隐藏输入源和相机，通过 `window.__dchatPick('camera'|'gallery'|'file')` 被调用；React 侧用 `__openAttachPanel` / `__closeAttachPanel` 与它联动。
-- 拍完的预览页：左上退出、右上裁剪、底部一排快捷提问，输入框复用主界面的同一套交互——它是通过 `window.__voiceStart / __voiceFinish / __voiceCancel / __voiceWarm / __voiceRelease / __voiceSetSink` 直接借用 React 里的录音引擎，识别结果回填到预览页的输入框，点发送才真正发出去。
+- 拍完的预览页：左上退出、右上裁剪、底部一排快捷提问，再往下是 `+` / 麦克风（切语音变键盘）/ 发送箭头三个 30px 圆钮。
+  语音是**借用** React 里的录音引擎（`window.__voiceStart / __voiceFinish / __voiceCancel / __voiceWarm / __voiceRelease / __voiceSetSink`），
+  识别结果回填到预览页输入框；发送箭头始终可点，所以**不写字也能只发照片**。
 
 ## 已知没做的
 

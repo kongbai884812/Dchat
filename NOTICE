@@ -14,7 +14,7 @@ Dchat
    - 许可证：MIT
    - 版权：Copyright (c) 2026 DeepSeek
    - 本项目对其构建产物做了修改（替换应用名文案、注入相机/诊断脚本、
-     增加导入精简逻辑，并重做了输入区：附件面板、三合一按钮、按住说话）。
+     增加导入精简逻辑，并重做了输入区：附件面板、主页面三合一按钮、预览页三键输入行、按住说话）。
    - 许可证全文：third_party/chat-demo/LICENSE（同时随 APK 打包在 assets/public/LICENSE）。
    - 该前端里包含的第三方库（React、Zustand、Mermaid、KaTeX、marked 等）
      均为 MIT 许可，其版权声明已在各自的构建产物中隐含。

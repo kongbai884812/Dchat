@@ -47,7 +47,7 @@ curl -s -G 127.0.0.1:3090/app/export \
 ## 上一轮功能（1.30）
 
 - 拍照后的整套 UI（取景器标题、预览页、裁剪页、按住说话、快捷提问、各种 toast）跟随 App 语言，英文界面下不再显示中文
-- `camera.js` 自带 `I18N` 词典（49 个键 × 2 语言）+ `t()`，现读 `localStorage['chat-demo:locale']`；语言变化后预览页会重建
+- `camera.js` 自带 `I18N` 词典（当时 49 个键 × 2 语言，1.32 去掉 `voiceInChat` 后 48）+ `t()`，现读 `localStorage['chat-demo:locale']`；语言变化后预览页会重建
 
 ## 上一轮功能（1.29）
 
